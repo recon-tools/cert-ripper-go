@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"path/filepath"
 )
 
 // Get the certificate chain for the hostname or a URL. In case the certificate chain does not contain the root
@@ -21,21 +22,19 @@ func getCertificateChain(u *url.URL) ([]*x509.Certificate, error) {
 	}
 	conn, connectionErr := tls.Dial("tcp", fmt.Sprintf("%s:443", u.Host), conf)
 	if connectionErr != nil {
-		log.Println("Error in Dial", connectionErr)
+		log.Printf("Failed to connect to %s\n Error: %s", u.Host, connectionErr)
 		return nil, connectionErr
 	}
 	defer func(conn *tls.Conn) {
 		err := conn.Close()
 		if err != nil {
-			log.Println("Error in closing connection to host", err)
+			log.Printf("Error in closing connection to %s\n Error: %s", u.Host, err)
 		}
 	}(conn)
 
 	chain := conn.ConnectionState().PeerCertificates
-	rootCert, err := getRootCertificateIfPossible(chain)
-	if err != nil {
-		//
-	} else {
+	rootCert, _ := getRootCertificateIfPossible(chain)
+	if rootCert != nil {
 		chain = append(chain, rootCert...)
 	}
 	return chain, nil
@@ -55,10 +54,11 @@ func getRootCertificateIfPossible(chain []*x509.Certificate) ([]*x509.Certificat
 	// Check if certificate is self-signed
 	if !bytes.Equal(issuer, subject) {
 		if len(cert.IssuingCertificateURL) > 0 {
-			resp, err := http.Get(cert.IssuingCertificateURL[0])
+			certURI := cert.IssuingCertificateURL[0]
+			resp, err := http.Get(certURI)
 			if err != nil {
-				log.Println(fmt.Sprintf("Failed to retrieve certificate from remote location `%s",
-					cert.IssuingCertificateURL[0]), err)
+				log.Printf("Failed to retrieve certificate from remote location %s\n Error: %s\n",
+					cert.IssuingCertificateURL[0], err)
 				return nil, err
 			}
 			defer func(Body io.ReadCloser) {
@@ -71,13 +71,32 @@ func getRootCertificateIfPossible(chain []*x509.Certificate) ([]*x509.Certificat
 				return nil, err
 			}
 
-			pkcsBlock, err := pkcs7.Parse(certBytes)
-			if err != nil {
-				log.Println("Failed to parse PKCS7 cert:", err)
-				return nil, err
+			certFormat := filepath.Ext(certURI)
+			switch certFormat {
+			case ".p7c":
+				{
+					pkcsBlock, err := pkcs7.Parse(certBytes)
+					if err != nil {
+						log.Println("Failed to parse PKCS7 cert:", err)
+						return nil, err
+					}
+					return pkcsBlock.Certificates, nil
+				}
+			case ".der":
+				fallthrough
+			case ".crt":
+				{
+					crt, err := x509.ParseCertificate(certBytes)
+					if err != nil {
+						log.Println("Failed to decode CRT cert:", err)
+						return nil, err
+					}
+					return []*x509.Certificate{crt}, nil
+				}
+			default:
+				log.Println("Invalid certificate format:", certFormat)
+				return nil, fmt.Errorf("invalid certificate format")
 			}
-
-			return pkcsBlock.Certificates, nil
 		}
 	}
 

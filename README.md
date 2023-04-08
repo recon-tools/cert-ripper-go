@@ -22,3 +22,12 @@ Certificate:
         Validity
 ...
 ```
+
+## Building
+
+Go 1.20 is required.
+
+```bash
+cd cert-ripper-go
+go build .
+```
