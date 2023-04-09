@@ -3,29 +3,28 @@ package cmd
 import (
 	"cert-ripper-go/pkg"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 	"log"
 	"net/url"
 )
 
 var printCmd = &cobra.Command{
 	Use:   "print",
-	Short: "Print the certificates from the chain to the standard output.",
+	Short: "Print the certificates from the chain to the standard output",
 	Long:  ``,
 	Run:   runPrint,
 }
 
-var rawUrl string
+var printRawUrl string
 
 func runPrint(cmd *cobra.Command, args []string) {
 	var u *url.URL
-	if pkg.IsValidHostname(rawUrl) {
+	if pkg.IsValidHostname(printRawUrl) {
 		u = &url.URL{
-			Host: rawUrl,
+			Host: printRawUrl,
 		}
 	} else {
 		var parseErr error
-		u, parseErr = url.ParseRequestURI(rawUrl)
+		u, parseErr = url.ParseRequestURI(printRawUrl)
 		if parseErr != nil {
 			log.Println("Error parsing URL", parseErr)
 		}
@@ -43,10 +42,6 @@ func init() {
 }
 
 func includePrintFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVar(&rawUrl, "url", "www.example.com",
+	cmd.PersistentFlags().StringVar(&printRawUrl, "url", "www.example.com",
 		"URL or hostname for which we would want to grab the certificate chain.")
-	err := viper.BindPFlag("url", cmd.PersistentFlags().Lookup("url"))
-	if err != nil {
-		return
-	}
 }

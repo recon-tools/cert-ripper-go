@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"github.com/fullsailor/pkcs7"
 	"github.com/grantae/certinfo"
@@ -11,7 +12,9 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"path/filepath"
+	"strings"
 )
 
 // GetCertificateChain gets the certificate chain for the hostname or a URL. In case the certificate chain does not
@@ -119,4 +122,52 @@ func PrintCertificates(host string, chain []*x509.Certificate) {
 		fmt.Println("===========================")
 		fmt.Print(result)
 	}
+}
+
+// SaveCertificates saves the certificates from the chain into a folder
+func SaveCertificates(folderPath string, chain []*x509.Certificate) error {
+	for i, cert := range chain {
+		switch i {
+		case 0:
+			path := filepath.Join(folderPath, strings.Join([]string{
+				"server",
+				strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", "."),
+				"pem"}, "."))
+			if err := saveAsPem(path, cert); err != nil {
+				return err
+			}
+		case len(chain) - 1:
+			path := filepath.Join(folderPath, strings.Join([]string{
+				"root",
+				strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", "."),
+				"pem"}, "."))
+			if err := saveAsPem(path, cert); err != nil {
+				return err
+			}
+		default:
+			path := filepath.Join(folderPath, strings.Join([]string{
+				fmt.Sprintf("inter-%d", i),
+				strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", "."),
+				"pem"}, "."))
+			if err := saveAsPem(path, cert); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+func saveAsPem(path string, cert *x509.Certificate) error {
+	pemData := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: cert.Raw,
+	})
+	// Save the PEM-encoded certificate to a file
+	err := os.WriteFile(path, pemData, 0644)
+	if err != nil {
+		log.Println("Certificate could not be saved!", err)
+		return err
+	}
+
+	return nil
 }

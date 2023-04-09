@@ -23,4 +23,5 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(printCmd)
+	rootCmd.AddCommand(exportCmd)
 }
