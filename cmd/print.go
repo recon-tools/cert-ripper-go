@@ -26,15 +26,18 @@ func runPrint(cmd *cobra.Command, args []string) {
 		var parseErr error
 		u, parseErr = url.ParseRequestURI(printRawUrl)
 		if parseErr != nil {
-			log.Println("Error parsing URL", parseErr)
+			log.Printf("Failed to parse URL %s\nError: %s", exportRawUrl, parseErr)
 		}
 	}
 
-	certs, err := pkg.GetCertificateChain(u)
-	if err != nil {
-		log.Println("Error fetching certificate chain:", err)
+	certs, fetchErr := pkg.GetCertificateChain(u)
+	if fetchErr != nil {
+		log.Println("Failed to fetch certificate chain", fetchErr)
 	}
-	_ = pkg.PrintCertificates(u.Host, certs)
+
+	if ioErr := pkg.PrintCertificates(u.Host, certs); ioErr != nil {
+		log.Println("Failed to print certificate to the standard output", ioErr)
+	}
 }
 
 func init() {
