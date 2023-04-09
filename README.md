@@ -5,7 +5,25 @@ Fetch certificate chain for a hostname or URL.
 ## Example of Usage
 
 ```bash
-cert-ripper stackoverflow.com
+$ cert-ripper -h
+Retrieve the certificate chain for a URL or a hostname.
+
+Usage:
+  cert-ripper [command]
+
+Available Commands:
+  completion  Generate the autocompletion script for the specified shell
+  help        Help about any command
+  print       Print the certificates from the chain to the standard output.
+
+Flags:
+  -h, --help      help for cert-ripper
+```
+
+Example:
+
+```bash
+cert-ripper-go print --url=stackoverflow.com
 ```
 
 Expected output:
