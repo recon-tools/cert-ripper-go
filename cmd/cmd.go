@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -14,11 +15,14 @@ func Execute() {
 	}
 }
 
+var appVersion = "development"
+var gitCommit = "commit"
+var gitRef = "ref"
 var rootCmd = &cobra.Command{
 	Use:     "cert-ripper",
 	Short:   "Retrieve the certificate chain for a URL or a hostname.",
 	Long:    ``,
-	Version: "0.0.2",
+	Version: fmt.Sprintf("%s (%s/%s)", appVersion, gitCommit, gitRef),
 }
 
 func init() {

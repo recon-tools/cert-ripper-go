@@ -24,12 +24,12 @@ func GetCertificateChain(u *url.URL) ([]*x509.Certificate, error) {
 	}
 	conn, err := tls.Dial("tcp", fmt.Sprintf("%s:443", u.Host), conf)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to connect to %s\nError: %s\n", u.Host, err)
+		return nil, fmt.Errorf("Failed to connect to %s\nError: %w\n", u.Host, err)
 	}
 	defer func(conn *tls.Conn) {
 		err = conn.Close()
 		if err != nil {
-			err = fmt.Errorf("Failed to close connection to %s\nError: %s\n", u.Host, err)
+			err = fmt.Errorf("Failed to close connection to %s\nError: %w\n", u.Host, err)
 		}
 	}(conn)
 
@@ -58,7 +58,7 @@ func getRootCertificateIfPossible(chain []*x509.Certificate) ([]*x509.Certificat
 			certURI := cert.IssuingCertificateURL[0]
 			resp, err := http.Get(certURI)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to retrieve certificate from remote location %s\nError: %s\n",
+				return nil, fmt.Errorf("Failed to retrieve certificate from remote location %s\nError: %w\n",
 					cert.IssuingCertificateURL[0], err)
 			}
 			defer func(Body io.ReadCloser) {
@@ -67,7 +67,7 @@ func getRootCertificateIfPossible(chain []*x509.Certificate) ([]*x509.Certificat
 
 			certBytes, err := io.ReadAll(resp.Body)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to retrieve certificate from remote location\nError: %s\n", err)
+				return nil, fmt.Errorf("Failed to retrieve certificate from remote location\nError: %w\n", err)
 			}
 
 			return convertBytesTox509Certificate(certURI, certBytes)
@@ -85,7 +85,7 @@ func convertBytesTox509Certificate(certURI string, certBytes []byte) ([]*x509.Ce
 		{
 			pkcsBlock, err := pkcs7.Parse(certBytes)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to decode PKCS7 certificate from %s\nError: %s\n", certURI, err)
+				return nil, fmt.Errorf("Failed to decode PKCS7 certificate from %s\nError: %w\n", certURI, err)
 			}
 			return pkcsBlock.Certificates, nil
 		}
@@ -110,7 +110,7 @@ func PrintCertificates(host string, chain []*x509.Certificate) error {
 	for _, cert := range chain {
 		txtData, parseErr := certinfo.CertificateText(cert)
 		if parseErr != nil {
-			return fmt.Errorf("Failed to convert certificate to TXT(OpenSSL) format\nError: %s\n", parseErr)
+			return fmt.Errorf("Failed to convert certificate to TXT(OpenSSL) format\nError: %w\n", parseErr)
 		}
 		fmt.Println("===========================")
 		fmt.Print(txtData)
@@ -136,7 +136,7 @@ func SaveCertificates(folderPath string, chain []*x509.Certificate, certFormat s
 			strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", ".")},
 			"."))
 		if err := saveCertificate(path, cert, certFormat); err != nil {
-			return fmt.Errorf("Failed to save certificate\nError: %s\n", err)
+			return fmt.Errorf("Failed to save certificate\nError: %w\n", err)
 		}
 	}
 
@@ -165,7 +165,7 @@ func saveAsPem(path string, cert *x509.Certificate) error {
 	})
 	err := os.WriteFile(path, pemData, 0644)
 	if err != nil {
-		return fmt.Errorf("Failed to save certificate to with the path of %s\n Error: %s", path, err)
+		return fmt.Errorf("Failed to save certificate to with the path of %s\n Error: %w", path, err)
 	}
 
 	return nil
@@ -175,10 +175,10 @@ func saveAsPem(path string, cert *x509.Certificate) error {
 func saveAsTxt(path string, cert *x509.Certificate) error {
 	txtData, parseErr := certinfo.CertificateText(cert)
 	if parseErr != nil {
-		return fmt.Errorf("Failed to convert certificate to TXT(OpenSSL) format\nError: %s\n", parseErr)
+		return fmt.Errorf("Failed to convert certificate to TXT(OpenSSL) format\nError: %w\n", parseErr)
 	}
 	if ioErr := os.WriteFile(path, []byte(txtData), 0644); ioErr != nil {
-		return fmt.Errorf("Failed to save certificate to with the path of %s\nError: %s", path, ioErr)
+		return fmt.Errorf("Failed to save certificate to with the path of %s\nError: %w", path, ioErr)
 	}
 
 	return nil

@@ -37,5 +37,5 @@ jobs:
           project_path: "."
           binary_name: "cert-ripper"
           build_flags: -v
-          ldflags: -X "main.appVersion=${{ env.APP_VERSION }}" -X "main.buildTime=${{ env.BUILD_TIME }}" -X main.gitCommit=${{ github.sha }} -X main.gitRef=${{ github.ref }}
+          ldflags: -X "cert-ripper-go/cmd.appVersion=${{ env.APP_VERSION }}" -X cert-ripper-go/cmd.gitCommit=${{ github.sha }} -X cert-ripper-go/cmd.gitRef=${{ github.ref }}
           extra_files: LICENSE README.md

@@ -1,6 +1,8 @@
 package main
 
-import "cert-ripper-go/cmd"
+import (
+	"cert-ripper-go/cmd"
+)
 
 // Main entry point
 func main() {

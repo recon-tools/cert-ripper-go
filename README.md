@@ -65,3 +65,9 @@ Go 1.20 is required.
 cd cert-ripper-go
 go build .
 ```
+
+### Build with ldflags
+
+```bash
+go build -ldflags "-X 'cert-ripper-go/cmd.appVersion=0.0.1'" .
+```
