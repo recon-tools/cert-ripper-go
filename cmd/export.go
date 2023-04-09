@@ -72,5 +72,5 @@ func includeExportFlags(cmd *cobra.Command) {
 		enumflag.New(&certFormat, "format", CertFormatIds, enumflag.EnumCaseInsensitive),
 		"format", "f",
 		"Output certificate format; can be 'pem' (default if omitted) or 'txt'")
-	//cmd.PersistentFlags().Lookup("format").NoOptDefVal = "pem"
+	cmd.PersistentFlags().Lookup("format").NoOptDefVal = "pem"
 }

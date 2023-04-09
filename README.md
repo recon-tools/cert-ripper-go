@@ -13,22 +13,26 @@ Usage:
 
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
+  export      Export the certificates from the chain and save them into a folder
   help        Help about any command
-  print       Print the certificates from the chain to the standard output.
+  print       Print the certificates from the chain to the standard output
 
 Flags:
   -h, --help      help for cert-ripper
+  -v, --version   version for cert-ripper
+
+Use "cert-ripper [command] --help" for more information about a command.
 ```
 
-Example:
+### Example of Usage for `print`:
 
 ```bash
-cert-ripper-go print --url=stackoverflow.com
+cert-ripper print --url=stackoverflow.com
 ```
 
 Expected output:
 
-```bash
+```
 Found 4 certificates in the certificate chain for stackoverflow.com 
 ===========================
 Certificate:
@@ -39,6 +43,18 @@ Certificate:
         Issuer: C=US,O=Let's Encrypt,CN=R3
         Validity
 ...
+```
+
+### Example of Usage for `export`:
+
+- With shorthands:
+```bash
+cert-ripper export -u ervinszilagyi.dev -p certs -f pem
+```
+
+- With long commands
+```bash
+cert-ripper export --url=ervinszilagyi.dev --path=certs --format=txt
 ```
 
 ## Building

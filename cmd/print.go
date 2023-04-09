@@ -42,6 +42,6 @@ func init() {
 }
 
 func includePrintFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVar(&printRawUrl, "url", "www.example.com",
+	cmd.PersistentFlags().StringVarP(&exportRawUrl, "url", "u", "www.example.com",
 		"URL or hostname for which we would want to grab the certificate chain.")
 }
