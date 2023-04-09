@@ -34,7 +34,7 @@ func runPrint(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Println("Error fetching certificate chain:", err)
 	}
-	pkg.PrintCertificates(u.Host, certs)
+	_ = pkg.PrintCertificates(u.Host, certs)
 }
 
 func init() {

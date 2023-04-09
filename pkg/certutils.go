@@ -112,49 +112,56 @@ func convertBytesTox509Certificate(certURI string, certBytes []byte) ([]*x509.Ce
 }
 
 // PrintCertificates prints the certificates from the chain to stdout in human-readable format.
-func PrintCertificates(host string, chain []*x509.Certificate) {
+func PrintCertificates(host string, chain []*x509.Certificate) error {
 	fmt.Printf("Found %d certificates in the certificate chain for %s \n", len(chain), host)
 	for _, cert := range chain {
-		result, err := certinfo.CertificateText(cert)
-		if err != nil {
-			log.Fatal(err)
+		txtData, parseErr := certinfo.CertificateText(cert)
+		if parseErr != nil {
+			log.Println("Cannot convert certificate to TXT!", parseErr)
+			return parseErr
 		}
 		fmt.Println("===========================")
-		fmt.Print(result)
+		fmt.Print(txtData)
 	}
+
+	return nil
 }
 
 // SaveCertificates saves the certificates from the chain into a folder
-func SaveCertificates(folderPath string, chain []*x509.Certificate) error {
+func SaveCertificates(folderPath string, chain []*x509.Certificate, certFormat string) error {
 	for i, cert := range chain {
+		var prefix string
 		switch i {
 		case 0:
-			path := filepath.Join(folderPath, strings.Join([]string{
-				"server",
-				strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", "."),
-				"pem"}, "."))
-			if err := saveAsPem(path, cert); err != nil {
-				return err
-			}
-		case len(chain) - 1:
-			path := filepath.Join(folderPath, strings.Join([]string{
-				"root",
-				strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", "."),
-				"pem"}, "."))
-			if err := saveAsPem(path, cert); err != nil {
-				return err
-			}
+			prefix = "server"
+		case 1:
+			prefix = "root"
 		default:
-			path := filepath.Join(folderPath, strings.Join([]string{
-				fmt.Sprintf("inter-%d", i),
-				strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", "."),
-				"pem"}, "."))
-			if err := saveAsPem(path, cert); err != nil {
-				return err
-			}
+			prefix = fmt.Sprintf("inter-%d", i)
+		}
+		path := filepath.Join(folderPath, strings.Join([]string{
+			prefix,
+			strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", ".")},
+			"."))
+		if err := saveCertificate(path, cert, certFormat); err != nil {
+			return err
 		}
 	}
+
 	return nil
+}
+
+func saveCertificate(path string, cert *x509.Certificate, certFormat string) error {
+	path = strings.Join([]string{path, certFormat}, ".")
+	formatToAction := map[string]func(string, *x509.Certificate) error{
+		"pem": saveAsPem,
+		"txt": saveAsTxt,
+	}
+	action, ok := formatToAction[certFormat]
+	if !ok {
+		return fmt.Errorf("invalid certificate type")
+	}
+	return action(path, cert)
 }
 
 func saveAsPem(path string, cert *x509.Certificate) error {
@@ -162,11 +169,25 @@ func saveAsPem(path string, cert *x509.Certificate) error {
 		Type:  "CERTIFICATE",
 		Bytes: cert.Raw,
 	})
-	// Save the PEM-encoded certificate to a file
 	err := os.WriteFile(path, pemData, 0644)
 	if err != nil {
 		log.Println("Certificate could not be saved!", err)
 		return err
+	}
+
+	return nil
+}
+
+func saveAsTxt(path string, cert *x509.Certificate) error {
+	txtData, parseErr := certinfo.CertificateText(cert)
+	if parseErr != nil {
+		log.Println("Cannot convert certificate to TXT!", parseErr)
+		return parseErr
+	}
+	ioErr := os.WriteFile(path, []byte(txtData), 0644)
+	if ioErr != nil {
+		log.Println("Certificate could not be saved!", ioErr)
+		return ioErr
 	}
 
 	return nil
