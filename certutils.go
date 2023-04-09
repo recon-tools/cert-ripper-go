@@ -14,9 +14,9 @@ import (
 	"path/filepath"
 )
 
-// Get the certificate chain for the hostname or a URL. In case the certificate chain does not contain the root
-// certificate, we will attend to fetch it using issuer location of the last certificate from the chain.
-func getCertificateChain(u *url.URL) ([]*x509.Certificate, error) {
+// GetCertificateChain gets the certificate chain for the hostname or a URL. In case the certificate chain does not
+// contain the root certificate, we will attend to fetch it using issuer location of the last certificate from the chain.
+func GetCertificateChain(u *url.URL) ([]*x509.Certificate, error) {
 	conf := &tls.Config{
 		InsecureSkipVerify: true,
 	}
@@ -71,42 +71,47 @@ func getRootCertificateIfPossible(chain []*x509.Certificate) ([]*x509.Certificat
 				return nil, err
 			}
 
-			certFormat := filepath.Ext(certURI)
-			switch certFormat {
-			case ".p7c":
-				{
-					pkcsBlock, err := pkcs7.Parse(certBytes)
-					if err != nil {
-						log.Println("Failed to parse PKCS7 cert:", err)
-						return nil, err
-					}
-					return pkcsBlock.Certificates, nil
-				}
-			case ".der":
-				fallthrough
-			case ".crt":
-				{
-					crt, err := x509.ParseCertificate(certBytes)
-					if err != nil {
-						log.Println("Failed to decode CRT cert:", err)
-						return nil, err
-					}
-					return []*x509.Certificate{crt}, nil
-				}
-			default:
-				log.Println("Invalid certificate format:", certFormat)
-				return nil, fmt.Errorf("invalid certificate format")
-			}
+			return convertBytesTox509Certificate(certURI, certBytes)
 		}
 	}
 
 	return make([]*x509.Certificate, 0), nil
 }
 
-// Print the certificates from the chain in human-readable format.
-func printCertificates(host string, certs []*x509.Certificate) {
-	fmt.Printf("Found %d certificates in the certificate chain for %s \n", len(certs), host)
-	for _, cert := range certs {
+// Convert a slice of bytes to a x509 Certificate object.
+func convertBytesTox509Certificate(certURI string, certBytes []byte) ([]*x509.Certificate, error) {
+	certFormat := filepath.Ext(certURI)
+	switch certFormat {
+	case ".p7c":
+		{
+			pkcsBlock, err := pkcs7.Parse(certBytes)
+			if err != nil {
+				log.Println("Failed to parse PKCS7 cert:", err)
+				return nil, err
+			}
+			return pkcsBlock.Certificates, nil
+		}
+	case ".der":
+		fallthrough
+	case ".crt":
+		{
+			crt, err := x509.ParseCertificate(certBytes)
+			if err != nil {
+				log.Println("Failed to decode CRT cert:", err)
+				return nil, err
+			}
+			return []*x509.Certificate{crt}, nil
+		}
+	default:
+		log.Println("Invalid certificate format:", certFormat)
+		return nil, fmt.Errorf("invalid certificate format")
+	}
+}
+
+// PrintCertificates prints the certificates from the chain to stdout in human-readable format.
+func PrintCertificates(host string, chain []*x509.Certificate) {
+	fmt.Printf("Found %d certificates in the certificate chain for %s \n", len(chain), host)
+	for _, cert := range chain {
 		result, err := certinfo.CertificateText(cert)
 		if err != nil {
 			log.Fatal(err)

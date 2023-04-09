@@ -34,11 +34,11 @@ func run(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	certs, err := getCertificateChain(u)
+	certs, err := GetCertificateChain(u)
 	if err != nil {
 		log.Println("Error fetching certificate chain:", err)
 	}
-	printCertificates(u.Host, certs)
+	PrintCertificates(u.Host, certs)
 }
 
 // Check if the input string is a valid hostname.
