@@ -58,8 +58,9 @@ func getRootCertificateIfPossible(chain []*x509.Certificate) ([]*x509.Certificat
 			certURI := cert.IssuingCertificateURL[0]
 			resp, err := http.Get(certURI)
 			if err != nil {
-				return nil, fmt.Errorf("Failed to retrieve certificate from remote location %s\nError: %w\n",
-					cert.IssuingCertificateURL[0], err)
+				return nil,
+					fmt.Errorf("Failed to retrieve certificate from remote location %s\nError: %w\n",
+						cert.IssuingCertificateURL[0], err)
 			}
 			defer func(Body io.ReadCloser) {
 				_ = Body.Close()

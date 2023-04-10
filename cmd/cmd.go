@@ -15,15 +15,17 @@ func Execute() {
 	}
 }
 
-var appVersion = "development"
-var gitCommit = "commit"
-var gitRef = "ref"
-var rootCmd = &cobra.Command{
-	Use:     "cert-ripper",
-	Short:   "Retrieve the certificate chain for a URL or a hostname.",
-	Long:    ``,
-	Version: fmt.Sprintf("%s (%s - %s)", appVersion, gitCommit, gitRef),
-}
+var (
+	appVersion = "development"
+	gitCommit  = "commit"
+	gitRef     = "ref"
+	rootCmd    = &cobra.Command{
+		Use:     "cert-ripper",
+		Short:   "Retrieve the certificate chain for a URL or a hostname.",
+		Long:    ``,
+		Version: fmt.Sprintf("%s (%s - %s)", appVersion, gitCommit, gitRef),
+	}
+)
 
 func init() {
 	rootCmd.AddCommand(printCmd)

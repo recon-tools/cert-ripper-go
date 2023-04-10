@@ -9,16 +9,6 @@ import (
 	"path/filepath"
 )
 
-var exportCmd = &cobra.Command{
-	Use:   "export",
-	Short: "Export the certificates from the chain and save them into a folder",
-	Long:  ``,
-	Run:   runExport,
-}
-
-var exportRawUrl string
-var targetFolderPath string
-
 type CertFormat enumflag.Flag
 
 const (
@@ -29,15 +19,27 @@ const (
 	P7C
 )
 
-var CertFormatIds = map[CertFormat][]string{
-	PEM: {"pem"},
-	TXT: {"txt"},
-	DER: {"der"},
-	P7B: {"p7b"},
-	P7C: {"p7c"},
-}
+var (
+	exportRawUrl     string
+	targetFolderPath string
 
-var certFormat CertFormat
+	exportCmd = &cobra.Command{
+		Use:   "export",
+		Short: "Export the certificates from the chain and save them into a folder",
+		Long:  ``,
+		Run:   runExport,
+	}
+
+	CertFormatIds = map[CertFormat][]string{
+		PEM: {"pem"},
+		TXT: {"txt"},
+		DER: {"der"},
+		P7B: {"p7b"},
+		P7C: {"p7c"},
+	}
+
+	certFormat CertFormat
+)
 
 func runExport(cmd *cobra.Command, args []string) {
 	var u *url.URL
