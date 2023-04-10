@@ -25,12 +25,16 @@ const (
 	PEM CertFormat = iota
 	TXT
 	DER
+	P7B
+	P7C
 )
 
 var CertFormatIds = map[CertFormat][]string{
 	PEM: {"pem"},
 	TXT: {"txt"},
 	DER: {"der"},
+	P7B: {"p7b"},
+	P7C: {"p7c"},
 }
 
 var certFormat CertFormat
@@ -73,5 +77,5 @@ func includeExportFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().VarP(
 		enumflag.New(&certFormat, "certFormat", CertFormatIds, enumflag.EnumCaseInsensitive),
 		"format", "f",
-		"Exported certificate format; can be 'pem' (default if omitted), 'der' or 'txt'")
+		"Exported certificate format; can be 'pem' (default if omitted), 'der', 'p7b', 'p7c' or 'txt'")
 }

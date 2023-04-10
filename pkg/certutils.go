@@ -150,6 +150,8 @@ func saveCertificate(path string, cert *x509.Certificate, certFormat string) err
 		"pem": saveAsPem,
 		"txt": saveAsTxt,
 		"der": saveAsDer,
+		"p7b": saveAsPkcs,
+		"p7c": saveAsPkcs,
 	}
 	action, ok := formatToAction[certFormat]
 	if !ok {
@@ -185,9 +187,21 @@ func saveAsTxt(path string, cert *x509.Certificate) error {
 	return nil
 }
 
-// Save a certificate to the location specified by the `path` using human-readable OpenSSL text output format
+// Save a certificate to the location specified by the `path` using binary DER format
 func saveAsDer(path string, cert *x509.Certificate) error {
 	if ioErr := os.WriteFile(path, cert.Raw, 0644); ioErr != nil {
+		return fmt.Errorf("Failed to save certificate to with the path of %s\nError: %w", path, ioErr)
+	}
+	return nil
+}
+
+// Save a certificate to the location specified by the `path` using PKCS (p7b or p7c) format
+func saveAsPkcs(path string, cert *x509.Certificate) error {
+	pkcsCert, parseErr := pkcs7.Parse(cert.Raw)
+	if parseErr != nil {
+		return fmt.Errorf("Failed to convert certificate to PKCS7 format\nError: %w\n", parseErr)
+	}
+	if ioErr := os.WriteFile(path, pkcsCert.Content, 0644); ioErr != nil {
 		return fmt.Errorf("Failed to save certificate to with the path of %s\nError: %w", path, ioErr)
 	}
 	return nil
