@@ -6,8 +6,8 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"github.com/fullsailor/pkcs7"
 	"github.com/grantae/certinfo"
+	"go.mozilla.org/pkcs7"
 	"io"
 	"net/http"
 	"net/url"
@@ -198,12 +198,14 @@ func saveAsDer(path string, cert *x509.Certificate) error {
 
 // Save a certificate to the location specified by the `path` using PKCS (p7b or p7c) format
 func saveAsPkcs(path string, cert *x509.Certificate) error {
-	pkcsCert, parseErr := pkcs7.Parse(cert.Raw)
-	if parseErr != nil {
-		return fmt.Errorf("Failed to convert certificate to PKCS7 format\nError: %w\n", parseErr)
+	certificateData, err := pkcs7.DegenerateCertificate(cert.Raw)
+	if err != nil {
+		return fmt.Errorf("Failed to degenerate certificate\nError: %w", err)
 	}
-	if ioErr := os.WriteFile(path, pkcsCert.Content, 0644); ioErr != nil {
+
+	if ioErr := os.WriteFile(path, certificateData, 0644); ioErr != nil {
 		return fmt.Errorf("Failed to save certificate to with the path of %s\nError: %w", path, ioErr)
 	}
+
 	return nil
 }
