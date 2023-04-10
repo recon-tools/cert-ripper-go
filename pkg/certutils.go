@@ -203,7 +203,12 @@ func saveAsPkcs(path string, cert *x509.Certificate) error {
 		return fmt.Errorf("Failed to degenerate certificate\nError: %w", err)
 	}
 
-	if ioErr := os.WriteFile(path, certificateData, 0644); ioErr != nil {
+	pemData := pem.EncodeToMemory(&pem.Block{
+		Type:  "PKCS7",
+		Bytes: certificateData,
+	})
+
+	if ioErr := os.WriteFile(path, pemData, 0644); ioErr != nil {
 		return fmt.Errorf("Failed to save certificate to with the path of %s\nError: %w", path, ioErr)
 	}
 
