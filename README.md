@@ -59,7 +59,7 @@ cert-ripper export --url=ervinszilagyi.dev --path=certs --format=txt
 
 ## Building
 
-Go 1.20 is required.
+Go 1.19 is required.
 
 ```bash
 cd cert-ripper-go
