@@ -53,11 +53,11 @@ func runExport(cmd *cobra.Command, args []string) {
 
 	certs, fetchErr := pkg.GetCertificateChain(u)
 	if fetchErr != nil {
-		log.Println("Failed to fetch certificate chain", fetchErr)
+		log.Println("Failed to fetch the certificate chain", fetchErr)
 	}
 
 	if ioErr := pkg.SaveCertificates(path, certs, CertFormatIds[certFormat][0]); ioErr != nil {
-		log.Println("Failed to save certificate from a chain", ioErr)
+		log.Println("Failed to save a certificate from the chain", ioErr)
 	}
 }
 
@@ -73,5 +73,5 @@ func includeExportFlags(cmd *cobra.Command) {
 	cmd.PersistentFlags().VarP(
 		enumflag.New(&certFormat, "certFormat", CertFormatIds, enumflag.EnumCaseInsensitive),
 		"format", "f",
-		"Output certificate format; can be 'pem' (default if omitted), 'der' or 'txt'")
+		"Exported certificate format; can be 'pem' (default if omitted), 'der' or 'txt'")
 }
