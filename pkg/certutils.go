@@ -149,6 +149,7 @@ func saveCertificate(path string, cert *x509.Certificate, certFormat string) err
 	formatToAction := map[string]func(string, *x509.Certificate) error{
 		"pem": saveAsPem,
 		"txt": saveAsTxt,
+		"der": saveAsDer,
 	}
 	action, ok := formatToAction[certFormat]
 	if !ok {
@@ -181,5 +182,13 @@ func saveAsTxt(path string, cert *x509.Certificate) error {
 		return fmt.Errorf("Failed to save certificate to with the path of %s\nError: %w", path, ioErr)
 	}
 
+	return nil
+}
+
+// Save a certificate to the location specified by the `path` using human-readable OpenSSL text output format
+func saveAsDer(path string, cert *x509.Certificate) error {
+	if ioErr := os.WriteFile(path, cert.Raw, 0644); ioErr != nil {
+		return fmt.Errorf("Failed to save certificate to with the path of %s\nError: %w", path, ioErr)
+	}
 	return nil
 }
