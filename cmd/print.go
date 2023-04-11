@@ -14,19 +14,17 @@ var printCmd = &cobra.Command{
 	Run:   runPrint,
 }
 
-var printRawUrl string
-
 func runPrint(cmd *cobra.Command, args []string) {
 	var u *url.URL
-	if pkg.IsValidHostname(printRawUrl) {
+	if pkg.IsValidHostname(rawUrl) {
 		u = &url.URL{
-			Host: printRawUrl,
+			Host: rawUrl,
 		}
 	} else {
 		var parseErr error
-		u, parseErr = url.ParseRequestURI(printRawUrl)
+		u, parseErr = url.ParseRequestURI(rawUrl)
 		if parseErr != nil {
-			log.Printf("Failed to parse URL %s\nError: %s", exportRawUrl, parseErr)
+			log.Printf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
 		}
 	}
 
@@ -45,6 +43,6 @@ func init() {
 }
 
 func includePrintFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVarP(&exportRawUrl, "url", "u", "www.example.com",
+	cmd.PersistentFlags().StringVarP(&rawUrl, "url", "u", "www.example.com",
 		"URL or hostname for which we would want to grab the certificate chain.")
 }

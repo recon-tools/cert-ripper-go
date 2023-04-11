@@ -13,6 +13,8 @@ type CertFormat enumflag.Flag
 
 const (
 	PEM CertFormat = iota
+	CRT
+	CER
 	TXT
 	DER
 	P7B
@@ -20,7 +22,6 @@ const (
 )
 
 var (
-	exportRawUrl     string
 	targetFolderPath string
 
 	exportCmd = &cobra.Command{
@@ -32,6 +33,8 @@ var (
 
 	CertFormatIds = map[CertFormat][]string{
 		PEM: {"pem"},
+		CRT: {"crt"},
+		CER: {"cer"},
 		TXT: {"txt"},
 		DER: {"der"},
 		P7B: {"p7b"},
@@ -43,15 +46,15 @@ var (
 
 func runExport(cmd *cobra.Command, args []string) {
 	var u *url.URL
-	if pkg.IsValidHostname(exportRawUrl) {
+	if pkg.IsValidHostname(rawUrl) {
 		u = &url.URL{
-			Host: exportRawUrl,
+			Host: rawUrl,
 		}
 	} else {
 		var parseErr error
-		u, parseErr = url.ParseRequestURI(exportRawUrl)
+		u, parseErr = url.ParseRequestURI(rawUrl)
 		if parseErr != nil {
-			log.Printf("Failed to parse URL %s\nError: %s", exportRawUrl, parseErr)
+			log.Printf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
 		}
 	}
 
@@ -72,12 +75,12 @@ func init() {
 }
 
 func includeExportFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVarP(&exportRawUrl, "url", "u", "www.example.com",
+	cmd.PersistentFlags().StringVarP(&rawUrl, "url", "u", "www.example.com",
 		"URL or hostname for which we would want to grab the certificate chain.")
 	cmd.PersistentFlags().StringVarP(&targetFolderPath, "path", "p", ".",
 		"Path to a writeable folder where the certificates will be saved.")
 	cmd.PersistentFlags().VarP(
 		enumflag.New(&certFormat, "certFormat", CertFormatIds, enumflag.EnumCaseInsensitive),
 		"format", "f",
-		"Exported certificate format; can be 'pem' (default if omitted), 'der', 'p7b', 'p7c' or 'txt'")
+		"Exported certificate format; can be 'pem' (default if omitted), 'crt', 'cer', 'der', 'p7b', 'p7c' or 'txt'")
 }

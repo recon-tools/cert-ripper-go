@@ -149,6 +149,8 @@ func saveCertificate(path string, cert *x509.Certificate, certFormat string) err
 	path = strings.Join([]string{path, certFormat}, ".")
 	formatToAction := map[string]func(string, *x509.Certificate) error{
 		"pem": saveAsPem,
+		"crt": saveAsPem,
+		"cer": saveAsPem,
 		"txt": saveAsTxt,
 		"der": saveAsDer,
 		"p7b": saveAsPkcs,

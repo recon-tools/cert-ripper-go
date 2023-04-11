@@ -25,6 +25,8 @@ var (
 		Long:    ``,
 		Version: fmt.Sprintf("%s (%s - %s)", appVersion, gitCommit, gitRef),
 	}
+
+	rawUrl string
 )
 
 func init() {
