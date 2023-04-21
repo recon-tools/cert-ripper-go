@@ -216,3 +216,22 @@ func saveAsPkcs(path string, cert *x509.Certificate) error {
 
 	return nil
 }
+
+// ValidateCertificateChain validates the certificate chain
+func ValidateCertificateChain(host string, serverCert *x509.Certificate) (bool, error) {
+	opts := x509.VerifyOptions{
+		DNSName: host,
+		Roots:   nil,
+	}
+
+	chain, err := serverCert.Verify(opts)
+	if err != nil {
+		return false, fmt.Errorf("Invalidate certificate. Verification err: %w\n", err)
+	}
+
+	if len(chain) > 0 {
+		return true, nil
+	}
+
+	return false, nil
+}
