@@ -86,14 +86,14 @@ cert-ripper validate -u ervinszilagyi.dev
 
 Install with homebrew:
 
-### Debian/Ubuntu
-
-ppa coming, for now download the executable from the [release](https://github.com/recon-tools/cert-ripper-go/releases) page
-
 ```bash
 brew tap recon-tools/homebrew-recon-tools
 brew install cert-ripper-go
 ```
+
+### Debian/Ubuntu
+
+ppa coming, for now download the executable from the [release](https://github.com/recon-tools/cert-ripper-go/releases) page
 
 ### Windows/Other
 
