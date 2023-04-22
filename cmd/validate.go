@@ -10,9 +10,13 @@ import (
 
 var validateCmd = &cobra.Command{
 	Use:   "validate",
-	Short: "Validate the certificate chain",
-	Long:  ``,
-	Run:   runValidate,
+	Short: "Validate the certificate",
+	Long: `Validate the certificate using the following checks:
+1. Check the expiration date
+2. Check if the certificate is trusted using the trust store from the host machine
+3. Check if the certificate is not part of a revocation list
+`,
+	Run: runValidate,
 }
 
 func runValidate(cmd *cobra.Command, args []string) {
@@ -39,9 +43,10 @@ func runValidate(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	isValid, validationErr := pkg.ValidateCertificateChain(u.Host, certs[0])
+	isValid, validationErr := pkg.ValidateCertificate(u.Host, certs[0])
 	if validationErr != nil {
 		fmt.Printf("Server certificate validation failed. Reason: %s", validationErr)
+		return
 	}
 	if isValid {
 		fmt.Printf("Certificate for host %s is valid", u.Host)
