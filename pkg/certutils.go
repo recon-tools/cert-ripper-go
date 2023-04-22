@@ -218,7 +218,10 @@ func saveAsPkcs(path string, cert *x509.Certificate) error {
 	return nil
 }
 
-// ValidateCertificate validates the certificate chain
+// ValidateCertificate validate server certificate using the following steps:
+// 1. Check the expiration date
+// 2. Check if the certificate is trusted using the trust store from the host machine
+// 3. Check if the certificate is not part of a revocation list
 func ValidateCertificate(host string, cert *x509.Certificate) (bool, error) {
 	if cert == nil {
 		return false, fmt.Errorf("No certificate provided for validation for host %s\n", host)
@@ -258,6 +261,7 @@ func ValidateCertificate(host string, cert *x509.Certificate) (bool, error) {
 	return false, nil
 }
 
+// Check if a certificate is in the revocation list using the CA's distribution point
 func isCertificateRevoked(cert *x509.Certificate) (bool, error) {
 	crlURL := cert.CRLDistributionPoints[0]
 	resp, err := http.Get(crlURL)
