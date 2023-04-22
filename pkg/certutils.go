@@ -14,6 +14,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 // GetCertificateChain gets the certificate chain for the hostname or a URL. In case the certificate chain does not
@@ -215,4 +216,78 @@ func saveAsPkcs(path string, cert *x509.Certificate) error {
 	}
 
 	return nil
+}
+
+// ValidateCertificate validate server certificate using the following steps:
+// 1. Check the expiration date
+// 2. Check if the certificate is trusted using the trust store from the host machine
+// 3. Check if the certificate is not part of a revocation list
+func ValidateCertificate(host string, cert *x509.Certificate) (bool, error) {
+	if cert == nil {
+		return false, fmt.Errorf("No certificate provided for validation for host %s\n", host)
+	}
+
+	// Check if the certificate is between expiration bounds
+	currentTime := time.Now().UTC()
+
+	if !currentTime.After(cert.NotBefore) {
+		return false, fmt.Errorf("Certificate for host %s will is not valid yet. It will be valid after %s\n",
+			host, cert.NotBefore)
+	}
+
+	if !currentTime.Before(cert.NotAfter) {
+		return false, fmt.Errorf("Certificate for host %s will expired at %s\n", host, cert.NotBefore)
+	}
+
+	// Verify if the certificate by building a certificate chain and check if the root is in the trusted store of
+	// the host requesting the validation
+	opts := x509.VerifyOptions{
+		DNSName: host,
+		Roots:   nil,
+	}
+
+	chain, err := cert.Verify(opts)
+	if err != nil {
+		return false, fmt.Errorf("Invalidate certificate. Verification err: %w\n", err)
+	}
+
+	// Verify if the certificate is part of a revocation list
+	revoked, err := isCertificateRevoked(cert)
+
+	if len(chain) > 0 && !revoked {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// Check if a certificate is in the revocation list using the CA's distribution point
+func isCertificateRevoked(cert *x509.Certificate) (bool, error) {
+	crlURL := cert.CRLDistributionPoints[0]
+	resp, err := http.Get(crlURL)
+	if err != nil {
+		panic(err)
+	}
+
+	defer func(Body io.ReadCloser) {
+		_ = Body.Close()
+	}(resp.Body)
+
+	crlBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, fmt.Errorf("Failed to get revocation list.\nError:%w", err)
+	}
+
+	rl, err := x509.ParseRevocationList(crlBytes)
+	if err != nil {
+		return false, fmt.Errorf("Failed to parse revocation list.\nError:%w", err)
+	}
+
+	for _, r := range rl.RevokedCertificates {
+		if r.SerialNumber.Cmp(cert.SerialNumber) == 0 {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }

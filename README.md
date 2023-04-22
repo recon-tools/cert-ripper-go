@@ -16,6 +16,7 @@ Available Commands:
   export      Export the certificates from the chain and save them into a folder
   help        Help about any command
   print       Print the certificates from the chain to the standard output
+  validate    Validate the certificate
 
 Flags:
   -h, --help      help for cert-ripper
@@ -24,7 +25,11 @@ Flags:
 Use "cert-ripper [command] --help" for more information about a command.
 ```
 
-### Example of Usage for `print`:
+### `print` command:
+
+Displays a certificate on the standard output in OpenSSL format.
+
+Example of usage:
 
 ```bash
 cert-ripper print --url=stackoverflow.com
@@ -45,7 +50,11 @@ Certificate:
 ...
 ```
 
-### Example of Usage for `export`:
+### `export` command:
+
+Saves the whole certificate chain in a folder. The certificates from the chain can be saved in different formats.
+
+Example of usage:
 
 - With shorthands:
 ```bash
@@ -55,6 +64,20 @@ cert-ripper export -u ervinszilagyi.dev -p certs -f pem
 - With long commands
 ```bash
 cert-ripper export --url=ervinszilagyi.dev --path=certs --format=txt
+```
+
+### `validate` command:
+
+Validates the server certificate using the following steps:
+
+1. Check the expiration date
+2. Check if the certificate is trusted using the trust store from the host machine
+3. Check if the certificate is not part of a revocation list
+
+Example of usage:
+
+```bash
+cert-ripper validate -u ervinszilagyi.dev
 ```
 
 ## Building

@@ -32,4 +32,5 @@ var (
 func init() {
 	rootCmd.AddCommand(printCmd)
 	rootCmd.AddCommand(exportCmd)
+	rootCmd.AddCommand(validateCmd)
 }
