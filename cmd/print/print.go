@@ -1,4 +1,4 @@
-package cmd
+package print
 
 import (
 	"cert-ripper-go/pkg"
@@ -7,12 +7,16 @@ import (
 	"net/url"
 )
 
-var printCmd = &cobra.Command{
-	Use:   "print",
-	Short: "Print the certificates from the chain to the standard output",
-	Long:  ``,
-	Run:   runPrint,
-}
+var (
+	Cmd = &cobra.Command{
+		Use:   "print",
+		Short: "Print the certificates from the chain to the standard output",
+		Long:  ``,
+		Run:   runPrint,
+	}
+
+	rawUrl string
+)
 
 func runPrint(cmd *cobra.Command, args []string) {
 	var u *url.URL
@@ -39,7 +43,7 @@ func runPrint(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	includePrintFlags(printCmd)
+	includePrintFlags(Cmd)
 }
 
 func includePrintFlags(cmd *cobra.Command) {

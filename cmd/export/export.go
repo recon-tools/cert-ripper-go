@@ -1,4 +1,4 @@
-package cmd
+package export
 
 import (
 	"cert-ripper-go/pkg"
@@ -24,7 +24,7 @@ const (
 var (
 	targetFolderPath string
 
-	exportCmd = &cobra.Command{
+	Cmd = &cobra.Command{
 		Use:   "export",
 		Short: "Export the certificates from the chain and save them into a folder",
 		Long:  ``,
@@ -42,6 +42,7 @@ var (
 	}
 
 	certFormat CertFormat
+	rawUrl     string
 )
 
 func runExport(cmd *cobra.Command, args []string) {
@@ -71,7 +72,7 @@ func runExport(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	includeExportFlags(exportCmd)
+	includeExportFlags(Cmd)
 }
 
 func includeExportFlags(cmd *cobra.Command) {

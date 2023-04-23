@@ -105,11 +105,11 @@ Go 1.19 is required.
 
 ```bash
 cd cert-ripper-go
-go build .
+go build -o target/cert-ripper
 ```
 
 ### Build with ldflags
 
 ```bash
-go build -ldflags "-X 'cert-ripper-go/cmd.appVersion=0.0.1'" .
+go build -ldflags "-X 'cert-ripper-go/cmd.appVersion=0.0.1'" -o target/cert-ripper
 ```
