@@ -1,4 +1,4 @@
-package cmd
+package validate
 
 import (
 	"cert-ripper-go/pkg"
@@ -8,16 +8,20 @@ import (
 	"net/url"
 )
 
-var validateCmd = &cobra.Command{
-	Use:   "validate",
-	Short: "Validate the certificate",
-	Long: `Validate the certificate using the following checks:
+var (
+	Cmd = &cobra.Command{
+		Use:   "validate",
+		Short: "Validate the certificate",
+		Long: `Validate the certificate using the following checks:
 1. Check the expiration date
 2. Check if the certificate is trusted using the trust store from the host machine
 3. Check if the certificate is not part of a revocation list
 `,
-	Run: runValidate,
-}
+		Run: runValidate,
+	}
+
+	rawUrl string
+)
 
 func runValidate(cmd *cobra.Command, args []string) {
 	var u *url.URL
@@ -56,7 +60,7 @@ func runValidate(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	includeValidateFlags(validateCmd)
+	includeValidateFlags(Cmd)
 }
 
 func includeValidateFlags(cmd *cobra.Command) {

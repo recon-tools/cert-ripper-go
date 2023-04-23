@@ -1,6 +1,10 @@
 package cmd
 
 import (
+	"cert-ripper-go/cmd/export"
+	printCmd "cert-ripper-go/cmd/print"
+	"cert-ripper-go/cmd/request"
+	"cert-ripper-go/cmd/validate"
 	"fmt"
 	"github.com/spf13/cobra"
 	"log"
@@ -25,12 +29,11 @@ var (
 		Long:    ``,
 		Version: fmt.Sprintf("%s (%s - %s)", appVersion, gitCommit, gitRef),
 	}
-
-	rawUrl string
 )
 
 func init() {
-	rootCmd.AddCommand(printCmd)
-	rootCmd.AddCommand(exportCmd)
-	rootCmd.AddCommand(validateCmd)
+	rootCmd.AddCommand(printCmd.Cmd)
+	rootCmd.AddCommand(export.Cmd)
+	rootCmd.AddCommand(validate.Cmd)
+	rootCmd.AddCommand(request.Cmd)
 }

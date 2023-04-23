@@ -172,7 +172,7 @@ func saveAsPem(path string, cert *x509.Certificate) error {
 	})
 	err := os.WriteFile(path, pemData, 0644)
 	if err != nil {
-		return fmt.Errorf("Failed to save certificate to with the path of %s\n Error: %w", path, err)
+		return fmt.Errorf("Failed to save certificate to the location of %s\nError: %w", path, err)
 	}
 
 	return nil
@@ -185,7 +185,7 @@ func saveAsTxt(path string, cert *x509.Certificate) error {
 		return fmt.Errorf("Failed to convert certificate to TXT(OpenSSL) format\nError: %w\n", parseErr)
 	}
 	if ioErr := os.WriteFile(path, []byte(txtData), 0644); ioErr != nil {
-		return fmt.Errorf("Failed to save certificate to with the path of %s\nError: %w", path, ioErr)
+		return fmt.Errorf("Failed to save certificate to the location of %s\nError: %w", path, ioErr)
 	}
 
 	return nil
@@ -194,7 +194,7 @@ func saveAsTxt(path string, cert *x509.Certificate) error {
 // Save a certificate to the location specified by the `path` using binary DER format
 func saveAsDer(path string, cert *x509.Certificate) error {
 	if ioErr := os.WriteFile(path, cert.Raw, 0644); ioErr != nil {
-		return fmt.Errorf("Failed to save certificate to with the path of %s\nError: %w", path, ioErr)
+		return fmt.Errorf("Failed to save certificate to the location of %s\nError: %w", path, ioErr)
 	}
 	return nil
 }
@@ -212,7 +212,7 @@ func saveAsPkcs(path string, cert *x509.Certificate) error {
 	})
 
 	if ioErr := os.WriteFile(path, pemData, 0644); ioErr != nil {
-		return fmt.Errorf("Failed to save certificate to with the path of %s\nError: %w", path, ioErr)
+		return fmt.Errorf("Failed to save certificate to the location of %s\nError: %w", path, ioErr)
 	}
 
 	return nil
