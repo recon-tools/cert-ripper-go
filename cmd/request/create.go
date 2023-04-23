@@ -25,13 +25,23 @@ var (
 )
 
 func runCreateRequest(cmd *cobra.Command, args []string) {
-	csr, csrErr := pkg.CreateCSR(commonName, country, state, city, organization, orgUnit, email)
+	request := pkg.CertificateRequest{
+		CommonName:   commonName,
+		Country:      country,
+		State:        state,
+		City:         city,
+		Organization: organization,
+		OrgUnit:      orgUnit,
+		Email:        email,
+	}
+
+	csr, csrErr := pkg.CreateCSR(request)
 	if csrErr != nil {
-		log.Printf("Failed create CSR\nError: %s", csrErr)
+		log.Printf("Failed create CSR. Error: %s", csrErr)
 	}
 	ioErr := pkg.SaveCSR(csr, targetPath)
 	if ioErr != nil {
-		log.Printf("Failed to save CSR to location %s\nError: %s", targetPath, ioErr)
+		log.Printf("Failed to save CSR to location %s. Error: %s", targetPath, ioErr)
 	}
 }
 
@@ -52,7 +62,7 @@ func includeCreateRequestFlags(cmd *cobra.Command) {
 		"Organization (example: Acme)")
 	cmd.PersistentFlags().StringVar(&orgUnit, "organizationUnit", "",
 		"Organization unit (example: IT)")
-	cmd.PersistentFlags().StringVar(&orgUnit, "email", "",
+	cmd.PersistentFlags().StringVar(&email, "email", "",
 		"Email address")
 	cmd.PersistentFlags().StringVar(&targetPath, "targetPath", ".",
 		"Target path for the CSR to be saved.")

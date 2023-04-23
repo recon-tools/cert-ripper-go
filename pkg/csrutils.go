@@ -8,35 +8,44 @@ import (
 	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
+	"github.com/grantae/certinfo"
 	"os"
 	"path/filepath"
 )
 
+const (
+	csrPEMBlockType = "CERTIFICATE REQUEST"
+)
+
+type CertificateRequest struct {
+	CommonName   string
+	Country      string
+	State        string
+	City         string
+	Organization string
+	OrgUnit      string
+	Email        string
+}
+
 // CreateCSR creates a new Certificate Signature Request and returns it as a slice of bytes
-func CreateCSR(commonName string,
-	country string,
-	state string,
-	city string,
-	organization string,
-	orgUnit string,
-	email string) ([]byte, error) {
+func CreateCSR(request CertificateRequest) ([]byte, error) {
 	var oidEmailAddress = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
 
 	keyBytes, _ := rsa.GenerateKey(rand.Reader, 1024)
 
 	subj := pkix.Name{
-		CommonName:         commonName,
-		Country:            []string{country},
-		Province:           []string{state},
-		Locality:           []string{city},
-		Organization:       []string{organization},
-		OrganizationalUnit: []string{orgUnit},
+		CommonName:         request.CommonName,
+		Country:            []string{request.Country},
+		Province:           []string{request.State},
+		Locality:           []string{request.City},
+		Organization:       []string{request.Organization},
+		OrganizationalUnit: []string{request.OrgUnit},
 		ExtraNames: []pkix.AttributeTypeAndValue{
 			{
 				Type: oidEmailAddress,
 				Value: asn1.RawValue{
 					Tag:   asn1.TagIA5String,
-					Bytes: []byte(email),
+					Bytes: []byte(request.Email),
 				},
 			},
 		},
@@ -49,7 +58,7 @@ func CreateCSR(commonName string,
 
 	csr, err := x509.CreateCertificateRequest(rand.Reader, &template, keyBytes)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to create CSR!\nError: %w", err)
+		return nil, err
 	}
 
 	return csr, nil
@@ -59,26 +68,44 @@ func CreateCSR(commonName string,
 func SaveCSR(csr []byte, targetPath string) error {
 	path := filepath.FromSlash(targetPath)
 
-	info, statErr := os.Stat(path)
-	if statErr != nil {
-		return fmt.Errorf("Failed to check path %s\n", path)
-	}
-
-	if info.IsDir() {
-		path = filepath.Join(targetPath, "csr.pem")
-	}
-
 	if _, ioErr := os.Stat(path); ioErr == nil {
-		return fmt.Errorf("File with path %s already exists\n", path)
+		return fmt.Errorf("file with location %s already exists", path)
 	}
 
 	pemData := pem.EncodeToMemory(&pem.Block{
-		Type:  "CERTIFICATE REQUEST",
+		Type:  csrPEMBlockType,
 		Bytes: csr,
 	})
 
 	if ioErr := os.WriteFile(path, pemData, 0644); ioErr != nil {
-		return fmt.Errorf("Failed to save CSR to the location of %s\nError: %w", targetPath, ioErr)
+		return ioErr
 	}
+	return nil
+}
+
+// DecodeCSR reads a PEM .csr file, decodes it
+func DecodeCSR(path string) (*x509.CertificateRequest, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	pemBlock, _ := pem.Decode(data)
+	if pemBlock == nil {
+		return nil, fmt.Errorf("cannot find the next PEM formatted block for file %s", path)
+	}
+	if pemBlock.Type != csrPEMBlockType || len(pemBlock.Headers) != 0 {
+		return nil, fmt.Errorf("unmatched type or headers for file %s", path)
+	}
+	return x509.ParseCertificateRequest(pemBlock.Bytes)
+}
+
+// PrintCSR print the content the CSR request to the STDOUT in OpenSSL text format
+func PrintCSR(csr *x509.CertificateRequest) error {
+	csrText, err := certinfo.CertificateRequestText(csr)
+	if err != nil {
+		return err
+	}
+	fmt.Print(csrText)
+
 	return nil
 }

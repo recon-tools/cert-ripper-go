@@ -7,11 +7,12 @@ import (
 var (
 	Cmd = &cobra.Command{
 		Use:   "request",
-		Short: "Create a CSR (certificate signing request)",
+		Short: "Create and decode CSRs (Certificate Signing Request)",
 		Long:  ``,
 	}
 )
 
 func init() {
 	Cmd.AddCommand(createCmd)
+	Cmd.AddCommand(decodeCmd)
 }
