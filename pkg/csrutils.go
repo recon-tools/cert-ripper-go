@@ -68,7 +68,7 @@ func SaveCSR(csr []byte, targetPath string) error {
 		path = filepath.Join(targetPath, "csr.pem")
 	}
 
-	if _, ioErr := os.Stat(path); os.IsExist(ioErr) {
+	if _, ioErr := os.Stat(path); ioErr == nil {
 		return fmt.Errorf("File with path %s already exists\n", path)
 	}
 
