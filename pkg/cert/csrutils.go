@@ -1,4 +1,4 @@
-package pkg
+package cert
 
 import (
 	"crypto/rand"
@@ -25,6 +25,7 @@ type CertificateRequest struct {
 	Organization string
 	OrgUnit      string
 	Email        string
+	SignatureAlg x509.SignatureAlgorithm
 }
 
 // CreateCSR creates a new Certificate Signature Request and returns it as a slice of bytes
@@ -53,7 +54,7 @@ func CreateCSR(request CertificateRequest) ([]byte, error) {
 
 	template := x509.CertificateRequest{
 		Subject:            subj,
-		SignatureAlgorithm: x509.SHA256WithRSA,
+		SignatureAlgorithm: request.SignatureAlg,
 	}
 
 	csr, err := x509.CreateCertificateRequest(rand.Reader, &template, keyBytes)

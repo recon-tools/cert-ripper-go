@@ -1,7 +1,8 @@
 package validate
 
 import (
-	"cert-ripper-go/pkg"
+	"cert-ripper-go/pkg/cert"
+	"cert-ripper-go/pkg/host"
 	"fmt"
 	"github.com/spf13/cobra"
 	"log"
@@ -25,7 +26,7 @@ var (
 
 func runValidate(cmd *cobra.Command, args []string) {
 	var u *url.URL
-	if pkg.IsValidHostname(rawUrl) {
+	if host.IsValidHostname(rawUrl) {
 		u = &url.URL{
 			Host: rawUrl,
 		}
@@ -37,7 +38,7 @@ func runValidate(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	certs, fetchErr := pkg.GetCertificateChain(u)
+	certs, fetchErr := cert.GetCertificateChain(u)
 	if fetchErr != nil {
 		log.Println("Failed to fetch certificate chain", fetchErr)
 	}
@@ -47,7 +48,7 @@ func runValidate(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	isValid, validationErr := pkg.ValidateCertificate(u.Host, certs[0])
+	isValid, validationErr := cert.ValidateCertificate(u.Host, certs[0])
 	if validationErr != nil {
 		fmt.Printf("Server certificate validation failed. Reason: %s", validationErr)
 		return

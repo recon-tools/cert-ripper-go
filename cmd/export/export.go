@@ -1,7 +1,8 @@
 package export
 
 import (
-	"cert-ripper-go/pkg"
+	"cert-ripper-go/pkg/cert"
+	"cert-ripper-go/pkg/host"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
 	"log"
@@ -47,7 +48,7 @@ var (
 
 func runExport(cmd *cobra.Command, args []string) {
 	var u *url.URL
-	if pkg.IsValidHostname(rawUrl) {
+	if host.IsValidHostname(rawUrl) {
 		u = &url.URL{
 			Host: rawUrl,
 		}
@@ -61,12 +62,12 @@ func runExport(cmd *cobra.Command, args []string) {
 
 	path := filepath.FromSlash(targetFolderPath)
 
-	certs, fetchErr := pkg.GetCertificateChain(u)
+	certs, fetchErr := cert.GetCertificateChain(u)
 	if fetchErr != nil {
 		log.Println("Failed to fetch the certificate chain", fetchErr)
 	}
 
-	if ioErr := pkg.SaveCertificates(path, certs, CertFormatIds[certFormat][0]); ioErr != nil {
+	if ioErr := cert.SaveCertificates(path, certs, CertFormatIds[certFormat][0]); ioErr != nil {
 		log.Println("Failed to save a certificate from the chain", ioErr)
 	}
 }
