@@ -1,6 +1,8 @@
 package cert
 
 import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -14,7 +16,9 @@ import (
 )
 
 const (
-	csrPEMBlockType = "CERTIFICATE REQUEST"
+	csrPEMBlockType   = "CERTIFICATE REQUEST"
+	rsaPrivateKeyType = "RSA PRIVATE KEY"
+	ecPrivateKeyType  = "EC PRIVATE KEY"
 )
 
 type CertificateRequest struct {
@@ -29,10 +33,8 @@ type CertificateRequest struct {
 }
 
 // CreateCSR creates a new Certificate Signature Request and returns it as a slice of bytes
-func CreateCSR(request CertificateRequest) ([]byte, error) {
+func CreateCSR(request CertificateRequest) ([]byte, any, error) {
 	var oidEmailAddress = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
-
-	keyBytes, _ := rsa.GenerateKey(rand.Reader, 1024)
 
 	subj := pkix.Name{
 		CommonName:         request.CommonName,
@@ -52,17 +54,52 @@ func CreateCSR(request CertificateRequest) ([]byte, error) {
 		},
 	}
 
+	var keys any
+	var keyErr error
+	switch request.SignatureAlg {
+	case x509.SHA256WithRSA:
+		keys, keyErr = rsa.GenerateKey(rand.Reader, 2048)
+		if keyErr != nil {
+			return nil, nil, keyErr
+		}
+	case x509.SHA384WithRSA:
+		keys, keyErr = rsa.GenerateKey(rand.Reader, 2048)
+		if keyErr != nil {
+			return nil, nil, keyErr
+		}
+	case x509.SHA512WithRSA:
+		keys, keyErr = rsa.GenerateKey(rand.Reader, 2048)
+		if keyErr != nil {
+			return nil, nil, keyErr
+		}
+	case x509.ECDSAWithSHA256:
+		keys, keyErr = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+		if keyErr != nil {
+			return nil, nil, keyErr
+		}
+	case x509.ECDSAWithSHA384:
+		keys, keyErr = ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
+		if keyErr != nil {
+			return nil, nil, keyErr
+		}
+	case x509.ECDSAWithSHA512:
+		keys, keyErr = ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+		if keyErr != nil {
+			return nil, nil, keyErr
+		}
+	}
+
 	template := x509.CertificateRequest{
 		Subject:            subj,
 		SignatureAlgorithm: request.SignatureAlg,
 	}
 
-	csr, err := x509.CreateCertificateRequest(rand.Reader, &template, keyBytes)
+	csr, err := x509.CreateCertificateRequest(rand.Reader, &template, keys)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
-	return csr, nil
+	return csr, keys, nil
 }
 
 // SaveCSR saves the CSR in PEM format to a location
@@ -107,6 +144,43 @@ func PrintCSR(csr *x509.CertificateRequest) error {
 		return err
 	}
 	fmt.Print(csrText)
+
+	return nil
+}
+
+// SavePrivateKey saves the private key (RSA, EC) in PEM format to a location
+func SavePrivateKey(privateKey any, targetPath string) error {
+	path := filepath.FromSlash(targetPath)
+	if _, ioErr := os.Stat(path); ioErr == nil {
+		return fmt.Errorf("file with location %s already exists", path)
+	}
+
+	var pemData []byte
+
+	switch key := privateKey.(type) {
+	case *rsa.PrivateKey:
+		privateKeyDER := x509.MarshalPKCS1PrivateKey(key)
+
+		pemData = pem.EncodeToMemory(&pem.Block{
+			Type:  rsaPrivateKeyType,
+			Bytes: privateKeyDER,
+		})
+
+	case *ecdsa.PrivateKey:
+		privateKeyDER, keyErr := x509.MarshalECPrivateKey(key)
+		if keyErr != nil {
+			return keyErr
+		}
+
+		pemData = pem.EncodeToMemory(&pem.Block{
+			Type:  ecPrivateKeyType,
+			Bytes: privateKeyDER,
+		})
+	}
+
+	if ioErr := os.WriteFile(path, pemData, 0644); ioErr != nil {
+		return ioErr
+	}
 
 	return nil
 }

@@ -3,9 +3,9 @@ package export
 import (
 	"cert-ripper-go/pkg/cert"
 	"cert-ripper-go/pkg/host"
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
-	"log"
 	"net/url"
 	"path/filepath"
 )
@@ -56,7 +56,7 @@ func runExport(cmd *cobra.Command, args []string) {
 		var parseErr error
 		u, parseErr = url.ParseRequestURI(rawUrl)
 		if parseErr != nil {
-			log.Printf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
+			fmt.Printf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
 		}
 	}
 
@@ -64,11 +64,11 @@ func runExport(cmd *cobra.Command, args []string) {
 
 	certs, fetchErr := cert.GetCertificateChain(u)
 	if fetchErr != nil {
-		log.Println("Failed to fetch the certificate chain", fetchErr)
+		fmt.Println("Failed to fetch the certificate chain", fetchErr)
 	}
 
 	if ioErr := cert.SaveCertificates(path, certs, CertFormatIds[certFormat][0]); ioErr != nil {
-		log.Println("Failed to save a certificate from the chain", ioErr)
+		fmt.Println("Failed to save a certificate from the chain", ioErr)
 	}
 }
 
@@ -77,12 +77,17 @@ func init() {
 }
 
 func includeExportFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVarP(&rawUrl, "url", "u", "www.example.com",
+	cmd.Flags().StringVarP(&rawUrl, "url", "u", "",
 		"URL or hostname for which we would want to grab the certificate chain.")
-	cmd.PersistentFlags().StringVarP(&targetFolderPath, "path", "p", ".",
+	cmd.Flags().StringVarP(&targetFolderPath, "path", "p", ".",
 		"Path to a writeable folder where the certificates will be saved.")
-	cmd.PersistentFlags().VarP(
+	cmd.Flags().VarP(
 		enumflag.New(&certFormat, "certFormat", CertFormatIds, enumflag.EnumCaseInsensitive),
 		"format", "f",
 		"Exported certificate format; can be 'pem' (default if omitted), 'crt', 'cer', 'der', 'p7b', 'p7c' or 'txt'")
+
+	if err := cmd.MarkFlagRequired("url"); err != nil {
+		fmt.Println("Failed to mark flag as required", err)
+		return
+	}
 }

@@ -5,7 +5,6 @@ import (
 	"cert-ripper-go/pkg/host"
 	"fmt"
 	"github.com/spf13/cobra"
-	"log"
 	"net/url"
 )
 
@@ -34,17 +33,17 @@ func runValidate(cmd *cobra.Command, args []string) {
 		var parseErr error
 		u, parseErr = url.ParseRequestURI(rawUrl)
 		if parseErr != nil {
-			log.Printf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
+			fmt.Printf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
 		}
 	}
 
 	certs, fetchErr := cert.GetCertificateChain(u)
 	if fetchErr != nil {
-		log.Println("Failed to fetch certificate chain", fetchErr)
+		fmt.Println("Failed to fetch certificate chain", fetchErr)
 	}
 
 	if len(certs) <= 0 {
-		log.Println("No certificates in the chain")
+		fmt.Println("No certificates in the chain")
 		return
 	}
 
@@ -65,6 +64,11 @@ func init() {
 }
 
 func includeValidateFlags(cmd *cobra.Command) {
-	cmd.PersistentFlags().StringVarP(&rawUrl, "url", "u", "www.example.com",
+	cmd.Flags().StringVarP(&rawUrl, "url", "u", "",
 		"URL or hostname for which we would want to grab the certificate chain.")
+
+	if err := cmd.MarkFlagRequired("url"); err != nil {
+		fmt.Println("Error:", err)
+		return
+	}
 }

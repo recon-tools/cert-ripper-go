@@ -23,16 +23,14 @@ var (
 	appVersion = "development"
 	gitCommit  = "commit"
 	rootCmd    = &cobra.Command{
-		Use:     "cert-ripper",
-		Short:   "Retrieve the certificate chain for a URL or a hostname.",
-		Long:    ``,
-		Version: fmt.Sprintf("%s (%s)", appVersion, gitCommit),
+		Use:              "cert-ripper",
+		Short:            "Retrieve the certificate chain for a URL or a hostname.",
+		Long:             ``,
+		Version:          fmt.Sprintf("%s (%s)", appVersion, gitCommit),
+		TraverseChildren: true,
 	}
 )
 
 func init() {
-	rootCmd.AddCommand(printCmd.Cmd)
-	rootCmd.AddCommand(export.Cmd)
-	rootCmd.AddCommand(validate.Cmd)
-	rootCmd.AddCommand(request.Cmd)
+	rootCmd.AddCommand(printCmd.Cmd, export.Cmd, validate.Cmd, request.Cmd)
 }

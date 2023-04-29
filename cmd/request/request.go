@@ -6,9 +6,10 @@ import (
 
 var (
 	Cmd = &cobra.Command{
-		Use:   "request",
-		Short: "Create and decode CSRs (Certificate Signing Request)",
-		Long:  ``,
+		Use:              "request",
+		Short:            "Create and decode CSRs (Certificate Signing Request)",
+		Long:             ``,
+		TraverseChildren: true,
 	}
 )
 
