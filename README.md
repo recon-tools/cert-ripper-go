@@ -80,6 +80,69 @@ Example of usage:
 cert-ripper validate -u ervinszilagyi.dev
 ```
 
+### `request` command:
+
+`request` command can be used to work with Certificate Signing Requests (CSR). It has the following subcommands:
+
+```bash
+Create and decode CSRs (Certificate Signing Request)
+
+Usage:
+  cert-ripper request [command]
+
+Available Commands:
+  create      Create a CSR (certificate signing request)
+  decode      Decode and print CSR file to the STDOUT in OpenSSL text format
+```
+
+- `create` command - used to create a CSR request with a private key
+
+```bash
+Create a CSR (certificate signing request)
+
+Usage:
+  cert-ripper request create [flags]
+
+Flags:
+      --city string                 Locality/City (example: New-York)
+      --commonName string           Common name (example: domain.com).
+      --country string              Country code (example: US).
+      --email string                Email address
+  -h, --help                        help for create
+      --organization string         Organization (example: Acme)
+      --organizationUnit string     Organization unit (example: IT)
+      --signatureAlg signatureAlg   Signature Algorithm (allowed values: SHA256WithRSA, SHA384WithRSA, SHA512WithRSA,SHA256WithECDSA, SHA384WithECDSA, SHA512WithECDSA) (default SHA256WithRSA)
+      --state string                Province/State (example: California)
+      --targetPath string           Target path for the CSR to be saved. (default ".")
+
+```
+
+Example:
+
+```bash
+cert-ripper request create --commonName esz.dev --country RO --state Mures --city Targu-Mures --organization ACME --organizationUnit IT --targetPath certs/req.csr --email esz@dev.com --signatureAlg ED25519
+```
+
+- `decode` command - used to decode a CSR and display it in OpenSSL format 
+
+```bash
+Decode and print CSR file to the STDOUT in OpenSSL text format
+
+Usage:
+  cert-ripper request decode [flags]
+
+Flags:
+  -h, --help          help for decode
+      --path string   Path for of the CSR file.
+```
+
+Example:
+
+```bash
+cert-ripper.exe request decode --path="certs/request.csr"
+```
+
+
 ## Download and Install
 
 ### MacOS

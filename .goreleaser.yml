@@ -1,7 +1,7 @@
 project_name: cert-ripper
 
 release:
-  name_template: '{{.ProjectName}}_{{.Version}}'
+  name_template: '{{.ProjectName}}-{{.Version}}-{{.Os}}-{{.Arch}}'
 
 before:
   hooks:

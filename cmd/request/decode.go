@@ -25,7 +25,7 @@ func runDecodeRequest(cmd *cobra.Command, args []string) {
 
 	ioErr := cert.PrintCSR(csr)
 	if ioErr != nil {
-		fmt.Printf("Failed to print csr with path %s. Error: %s", csrPath, csrErr)
+		fmt.Printf("Failed to print csr with path %s. Error: %s", csrPath, ioErr)
 	}
 }
 
