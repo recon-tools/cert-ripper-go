@@ -7,6 +7,28 @@ before:
   hooks:
     - go mod tidy
 
+changelog:
+  use: github
+  sort: asc
+  abbrev: 0
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\([[:word:]]+\))??!?:.+$'
+      order: 0
+    - title: 'Bug fixes'
+      regexp: '^.*?bug(\([[:word:]]+\))??!?:.+$'
+      order: 1
+    - title: Others
+      order: 999
+
+  filters:
+    # Commit messages matching the regexp listed here will be removed from
+    # the changelog
+    exclude:
+      - '^docs:'
+      - typo
+      - (?i)foo
+
 builds:
   - <<: &build_defaults
       binary: bin/cert-ripper
