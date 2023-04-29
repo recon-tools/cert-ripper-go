@@ -168,26 +168,20 @@ func SavePrivateKey(privateKey any, targetPath string) error {
 		return keyErr
 	}
 
+	pemType := ed25519PrivateKeyType
 	switch privateKey.(type) {
 	case *rsa.PrivateKey:
-		pemData = pem.EncodeToMemory(&pem.Block{
-			Type:  rsaPrivateKeyType,
-			Bytes: privateKeyDer,
-		})
-
+		pemType = rsaPrivateKeyType
 	case *ecdsa.PrivateKey:
-		pemData = pem.EncodeToMemory(&pem.Block{
-			Type:  ecPrivateKeyType,
-			Bytes: privateKeyDer,
-		})
-
+		pemType = ecPrivateKeyType
 	case ed25519.PrivateKey:
-		pemData = pem.EncodeToMemory(&pem.Block{
-			Type:  ed25519PrivateKeyType,
-			Bytes: privateKeyDer,
-		})
+		pemType = ed25519PrivateKeyType
 	}
 
+	pemData = pem.EncodeToMemory(&pem.Block{
+		Type:  pemType,
+		Bytes: privateKeyDer,
+	})
 	if ioErr := os.WriteFile(path, pemData, 0644); ioErr != nil {
 		return ioErr
 	}
