@@ -1,0 +1,29 @@
+project_name: gh
+
+release:
+  name_template: '{{.ProjectName}}_{{.Version}}'
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - <<: &build_defaults
+      binary: bin/cert-ripper
+      ldflags:
+        - -s -w -X cert-ripper-go/cmd.appVersion=${{.Version}}" -X cert-ripper-go/cmd.gitCommit=${{.Commit}}
+    id: macos
+    goos: [darwin]
+    goarch: [amd64, arm64]
+
+  - <<: *build_defaults
+    id: linux
+    goos: [linux]
+    goarch: [386, arm, amd64, arm64]
+    env:
+      - CGO_ENABLED=0
+
+  - <<: *build_defaults
+    id: windows
+    goos: [windows]
+    goarch: [386, amd64, arm64]
