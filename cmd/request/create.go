@@ -17,6 +17,7 @@ const (
 	SHA256WithECDSA
 	SHA384WithECDSA
 	SHA512WithECDSA
+	ED25519
 )
 
 var (
@@ -34,6 +35,7 @@ var (
 		SHA256WithECDSA: {"SHA256WithECDSA"},
 		SHA384WithECDSA: {"SHA384WithECDSA"},
 		SHA512WithECDSA: {"SHA512WithECDSA"},
+		ED25519:         {"ED25519"},
 	}
 
 	signatureAlgTox509 = map[SignatureAlgorithm]x509.SignatureAlgorithm{
@@ -43,6 +45,7 @@ var (
 		SHA256WithECDSA: x509.ECDSAWithSHA256,
 		SHA384WithECDSA: x509.ECDSAWithSHA384,
 		SHA512WithECDSA: x509.ECDSAWithSHA512,
+		ED25519:         x509.PureEd25519,
 	}
 
 	commonName   string

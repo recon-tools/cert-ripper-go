@@ -2,6 +2,7 @@ package cert
 
 import (
 	"crypto/ecdsa"
+	"crypto/ed25519"
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
@@ -16,9 +17,10 @@ import (
 )
 
 const (
-	csrPEMBlockType   = "CERTIFICATE REQUEST"
-	rsaPrivateKeyType = "RSA PRIVATE KEY"
-	ecPrivateKeyType  = "EC PRIVATE KEY"
+	csrPEMBlockType       = "CERTIFICATE REQUEST"
+	rsaPrivateKeyType     = "RSA PRIVATE KEY"
+	ecPrivateKeyType      = "EC PRIVATE KEY"
+	ed25519PrivateKeyType = "PRIVATE KEY"
 )
 
 type CertificateRequest struct {
@@ -84,6 +86,11 @@ func CreateCSR(request CertificateRequest) ([]byte, any, error) {
 		}
 	case x509.ECDSAWithSHA512:
 		keys, keyErr = ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
+		if keyErr != nil {
+			return nil, nil, keyErr
+		}
+	case x509.PureEd25519:
+		_, keys, keyErr = ed25519.GenerateKey(rand.Reader)
 		if keyErr != nil {
 			return nil, nil, keyErr
 		}
@@ -156,25 +163,28 @@ func SavePrivateKey(privateKey any, targetPath string) error {
 	}
 
 	var pemData []byte
+	privateKeyDer, keyErr := x509.MarshalPKCS8PrivateKey(privateKey)
+	if keyErr != nil {
+		return keyErr
+	}
 
-	switch key := privateKey.(type) {
+	switch privateKey.(type) {
 	case *rsa.PrivateKey:
-		privateKeyDER := x509.MarshalPKCS1PrivateKey(key)
-
 		pemData = pem.EncodeToMemory(&pem.Block{
 			Type:  rsaPrivateKeyType,
-			Bytes: privateKeyDER,
+			Bytes: privateKeyDer,
 		})
 
 	case *ecdsa.PrivateKey:
-		privateKeyDER, keyErr := x509.MarshalECPrivateKey(key)
-		if keyErr != nil {
-			return keyErr
-		}
-
 		pemData = pem.EncodeToMemory(&pem.Block{
 			Type:  ecPrivateKeyType,
-			Bytes: privateKeyDER,
+			Bytes: privateKeyDer,
+		})
+
+	case ed25519.PrivateKey:
+		pemData = pem.EncodeToMemory(&pem.Block{
+			Type:  ed25519PrivateKeyType,
+			Bytes: privateKeyDer,
 		})
 	}
 
