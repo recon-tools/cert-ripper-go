@@ -22,12 +22,11 @@ func Execute() {
 var (
 	appVersion = "development"
 	gitCommit  = "commit"
-	gitRef     = "ref"
 	rootCmd    = &cobra.Command{
 		Use:     "cert-ripper",
 		Short:   "Retrieve the certificate chain for a URL or a hostname.",
 		Long:    ``,
-		Version: fmt.Sprintf("%s (%s - %s)", appVersion, gitCommit, gitRef),
+		Version: fmt.Sprintf("%s (%s)", appVersion, gitCommit),
 	}
 )
 
