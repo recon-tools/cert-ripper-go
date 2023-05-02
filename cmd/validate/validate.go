@@ -34,12 +34,14 @@ func runValidate(cmd *cobra.Command, args []string) {
 		u, parseErr = url.ParseRequestURI(rawUrl)
 		if parseErr != nil {
 			fmt.Printf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
+			return
 		}
 	}
 
 	certs, fetchErr := cert.GetCertificateChain(u)
 	if fetchErr != nil {
 		fmt.Println("Failed to fetch certificate chain", fetchErr)
+		return
 	}
 
 	if len(certs) <= 0 {

@@ -6,7 +6,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	"github.com/grantae/certinfo"
+	"github.com/smallstep/certinfo"
 	"go.mozilla.org/pkcs7"
 	"io"
 	"net/http"

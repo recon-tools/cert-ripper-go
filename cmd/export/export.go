@@ -57,6 +57,7 @@ func runExport(cmd *cobra.Command, args []string) {
 		u, parseErr = url.ParseRequestURI(rawUrl)
 		if parseErr != nil {
 			fmt.Printf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
+			return
 		}
 	}
 
@@ -65,10 +66,12 @@ func runExport(cmd *cobra.Command, args []string) {
 	certs, fetchErr := cert.GetCertificateChain(u)
 	if fetchErr != nil {
 		fmt.Println("Failed to fetch the certificate chain", fetchErr)
+		return
 	}
 
 	if ioErr := cert.SaveCertificates(path, certs, CertFormatIds[certFormat][0]); ioErr != nil {
 		fmt.Println("Failed to save a certificate from the chain", ioErr)
+		return
 	}
 }
 

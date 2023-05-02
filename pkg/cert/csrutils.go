@@ -11,7 +11,7 @@ import (
 	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
-	"github.com/grantae/certinfo"
+	"github.com/smallstep/certinfo"
 	"os"
 	"path/filepath"
 )
