@@ -1,23 +1,11 @@
 package request
 
 import (
+	"cert-ripper-go/cmd/common"
 	"cert-ripper-go/pkg/cert"
-	"crypto/x509"
 	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
-)
-
-type SignatureAlgorithm enumflag.Flag
-
-const (
-	SHA256WithRSA SignatureAlgorithm = iota
-	SHA384WithRSA
-	SHA512WithRSA
-	SHA256WithECDSA
-	SHA384WithECDSA
-	SHA512WithECDSA
-	ED25519
 )
 
 var (
@@ -28,26 +16,6 @@ var (
 		Run:   runCreateRequest,
 	}
 
-	signatureAlgIds = map[SignatureAlgorithm][]string{
-		SHA256WithRSA:   {"SHA256WithRSA"},
-		SHA384WithRSA:   {"SHA384WithRSA"},
-		SHA512WithRSA:   {"SHA512WithRSA"},
-		SHA256WithECDSA: {"SHA256WithECDSA"},
-		SHA384WithECDSA: {"SHA384WithECDSA"},
-		SHA512WithECDSA: {"SHA512WithECDSA"},
-		ED25519:         {"ED25519"},
-	}
-
-	signatureAlgTox509 = map[SignatureAlgorithm]x509.SignatureAlgorithm{
-		SHA256WithRSA:   x509.SHA256WithRSA,
-		SHA384WithRSA:   x509.SHA384WithRSA,
-		SHA512WithRSA:   x509.SHA512WithRSA,
-		SHA256WithECDSA: x509.ECDSAWithSHA256,
-		SHA384WithECDSA: x509.ECDSAWithSHA384,
-		SHA512WithECDSA: x509.ECDSAWithSHA512,
-		ED25519:         x509.PureEd25519,
-	}
-
 	commonName   string
 	country      string
 	state        string
@@ -56,7 +24,7 @@ var (
 	orgUnit      string
 	email        string
 	targetPath   string
-	signatureAlg SignatureAlgorithm
+	signatureAlg common.SignatureAlgorithm
 )
 
 func runCreateRequest(cmd *cobra.Command, args []string) {
@@ -68,7 +36,7 @@ func runCreateRequest(cmd *cobra.Command, args []string) {
 		Organization: organization,
 		OrgUnit:      orgUnit,
 		Email:        email,
-		SignatureAlg: signatureAlgTox509[signatureAlg],
+		SignatureAlg: common.SignatureAlgTox509[signatureAlg],
 	}
 
 	csr, privateKey, csrErr := cert.CreateCSR(request)
@@ -113,7 +81,7 @@ func includeCreateRequestFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&targetPath, "targetPath", ".",
 		"Target path for the CSR to be saved.")
 	cmd.Flags().Var(
-		enumflag.New(&signatureAlg, "signatureAlg", signatureAlgIds, enumflag.EnumCaseInsensitive),
+		enumflag.New(&signatureAlg, "signatureAlg", common.SignatureAlgIds, enumflag.EnumCaseInsensitive),
 		"signatureAlg", "Signature Algorithm (allowed values: SHA256WithRSA, SHA384WithRSA, SHA512WithRSA,"+
 			"SHA256WithECDSA, SHA384WithECDSA, SHA512WithECDSA)")
 

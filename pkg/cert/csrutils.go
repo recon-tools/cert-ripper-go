@@ -3,7 +3,6 @@ package cert
 import (
 	"crypto/ecdsa"
 	"crypto/ed25519"
-	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
@@ -56,44 +55,9 @@ func CreateCSR(request CertificateRequest) ([]byte, any, error) {
 		},
 	}
 
-	var keys any
-	var keyErr error
-	switch request.SignatureAlg {
-	case x509.SHA256WithRSA:
-		keys, keyErr = rsa.GenerateKey(rand.Reader, 2048)
-		if keyErr != nil {
-			return nil, nil, keyErr
-		}
-	case x509.SHA384WithRSA:
-		keys, keyErr = rsa.GenerateKey(rand.Reader, 2048)
-		if keyErr != nil {
-			return nil, nil, keyErr
-		}
-	case x509.SHA512WithRSA:
-		keys, keyErr = rsa.GenerateKey(rand.Reader, 2048)
-		if keyErr != nil {
-			return nil, nil, keyErr
-		}
-	case x509.ECDSAWithSHA256:
-		keys, keyErr = ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
-		if keyErr != nil {
-			return nil, nil, keyErr
-		}
-	case x509.ECDSAWithSHA384:
-		keys, keyErr = ecdsa.GenerateKey(elliptic.P384(), rand.Reader)
-		if keyErr != nil {
-			return nil, nil, keyErr
-		}
-	case x509.ECDSAWithSHA512:
-		keys, keyErr = ecdsa.GenerateKey(elliptic.P521(), rand.Reader)
-		if keyErr != nil {
-			return nil, nil, keyErr
-		}
-	case x509.PureEd25519:
-		_, keys, keyErr = ed25519.GenerateKey(rand.Reader)
-		if keyErr != nil {
-			return nil, nil, keyErr
-		}
+	keys, keyErr := generatePrivateKey(request.SignatureAlg)
+	if keyErr != nil {
+		return nil, nil, keyErr
 	}
 
 	template := x509.CertificateRequest{
@@ -101,9 +65,9 @@ func CreateCSR(request CertificateRequest) ([]byte, any, error) {
 		SignatureAlgorithm: request.SignatureAlg,
 	}
 
-	csr, err := x509.CreateCertificateRequest(rand.Reader, &template, keys)
-	if err != nil {
-		return nil, nil, err
+	csr, csrErr := x509.CreateCertificateRequest(rand.Reader, &template, keys)
+	if csrErr != nil {
+		return nil, nil, csrErr
 	}
 
 	return csr, keys, nil

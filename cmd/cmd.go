@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"cert-ripper-go/cmd/export"
+	"cert-ripper-go/cmd/generate"
 	printCmd "cert-ripper-go/cmd/print"
 	"cert-ripper-go/cmd/request"
 	"cert-ripper-go/cmd/validate"
@@ -32,5 +33,5 @@ var (
 )
 
 func init() {
-	rootCmd.AddCommand(printCmd.Cmd, export.Cmd, validate.Cmd, request.Cmd)
+	rootCmd.AddCommand(printCmd.Cmd, export.Cmd, validate.Cmd, request.Cmd, generate.Cmd)
 }
