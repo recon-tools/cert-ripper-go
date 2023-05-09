@@ -9,7 +9,7 @@ import (
 	"crypto/x509"
 )
 
-func generatePrivateKey(signatureAlg x509.SignatureAlgorithm) (keys any, err error) {
+func GeneratePrivateKey(signatureAlg x509.SignatureAlgorithm) (keys any, err error) {
 	switch signatureAlg {
 	case x509.SHA256WithRSA:
 		keys, err = rsa.GenerateKey(rand.Reader, 2048)

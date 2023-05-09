@@ -2,13 +2,20 @@ package cert
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/ed25519"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/pem"
 	"fmt"
 	"github.com/smallstep/certinfo"
 	"go.mozilla.org/pkcs7"
 	"io"
+	"math/big"
+	"net"
 	"net/http"
 	"net/url"
 	"os"
@@ -294,4 +301,82 @@ func isCertificateRevoked(cert *x509.Certificate) (bool, error) {
 	}
 
 	return false, nil
+}
+
+// CreateCertificate generates a self-signed X509 certificate
+func CreateCertificate(hostName string,
+	notBefore time.Time,
+	validFor time.Duration,
+	isCa bool,
+	organization string,
+	privateKey any) (*x509.Certificate, error) {
+
+	notAfter := notBefore.Add(validFor)
+
+	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+	if err != nil {
+		return nil, err
+	}
+
+	// ECDSA, ED25519 and RSA subject keys should have the DigitalSignature
+	// KeyUsage bits set in the x509.Certificate template
+	keyUsage := x509.KeyUsageDigitalSignature
+	// Only RSA subject keys should have the KeyEncipherment KeyUsage bits set. In
+	// the context of TLS this KeyUsage is particular to RSA key exchange and
+	// authentication.
+	if _, isRSA := privateKey.(*rsa.PrivateKey); isRSA {
+		keyUsage |= x509.KeyUsageKeyEncipherment
+	}
+
+	template := x509.Certificate{
+		SerialNumber: serialNumber,
+		Subject: pkix.Name{
+			Organization: []string{organization},
+		},
+		NotBefore: notBefore,
+		NotAfter:  notAfter,
+
+		KeyUsage:              keyUsage,
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	hosts := strings.Split(hostName, ",")
+	for _, h := range hosts {
+		if ip := net.ParseIP(h); ip != nil {
+			template.IPAddresses = append(template.IPAddresses, ip)
+		} else {
+			template.DNSNames = append(template.DNSNames, h)
+		}
+	}
+
+	if isCa {
+		template.IsCA = true
+		template.KeyUsage |= x509.KeyUsageCertSign
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, getPublicKey(privateKey), privateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return x509.ParseCertificate(derBytes)
+}
+
+func CreateCertificateFromCSR(request *x509.CertificateRequest, privateKey any) (*x509.Certificate, error) {
+	return nil, nil
+}
+
+func getPublicKey(privateKey any) any {
+	switch k := privateKey.(type) {
+	case *rsa.PrivateKey:
+		return &k.PublicKey
+	case *ecdsa.PrivateKey:
+		return &k.PublicKey
+	case ed25519.PrivateKey:
+		return k.Public().(ed25519.PublicKey)
+	default:
+		return nil
+	}
 }

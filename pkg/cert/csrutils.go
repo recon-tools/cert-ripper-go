@@ -55,7 +55,7 @@ func CreateCSR(request CertificateRequest) ([]byte, any, error) {
 		},
 	}
 
-	keys, keyErr := generatePrivateKey(request.SignatureAlg)
+	keys, keyErr := GeneratePrivateKey(request.SignatureAlg)
 	if keyErr != nil {
 		return nil, nil, keyErr
 	}
