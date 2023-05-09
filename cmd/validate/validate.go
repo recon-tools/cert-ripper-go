@@ -3,7 +3,6 @@ package validate
 import (
 	"cert-ripper-go/pkg/cert"
 	"cert-ripper-go/pkg/host"
-	"fmt"
 	"github.com/spf13/cobra"
 	"net/url"
 )
@@ -33,31 +32,31 @@ func runValidate(cmd *cobra.Command, args []string) {
 		var parseErr error
 		u, parseErr = url.ParseRequestURI(rawUrl)
 		if parseErr != nil {
-			fmt.Printf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
+			cmd.PrintErrf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
 			return
 		}
 	}
 
 	certs, fetchErr := cert.GetCertificateChain(u)
 	if fetchErr != nil {
-		fmt.Println("Failed to fetch certificate chain", fetchErr)
+		cmd.PrintErrf("Failed to fetch certificate chain", fetchErr)
 		return
 	}
 
 	if len(certs) <= 0 {
-		fmt.Println("No certificates in the chain")
+		cmd.PrintErr("No certificates in the chain.")
 		return
 	}
 
 	isValid, validationErr := cert.ValidateCertificate(u.Host, certs[0])
 	if validationErr != nil {
-		fmt.Printf("Server certificate validation failed. Reason: %s", validationErr)
+		cmd.PrintErrf("Server certificate validation failed. Reason: %s", validationErr)
 		return
 	}
 	if isValid {
-		fmt.Printf("Certificate for host %s is valid", u.Host)
+		cmd.Printf("Certificate for host %s is valid", u.Host)
 	} else {
-		fmt.Println("Server certificate validation failed. Reason: none")
+		cmd.Println("Server certificate validation failed. Reason: none")
 	}
 }
 
@@ -70,7 +69,7 @@ func includeValidateFlags(cmd *cobra.Command) {
 		"URL or hostname for which we would want to grab the certificate chain.")
 
 	if err := cmd.MarkFlagRequired("url"); err != nil {
-		fmt.Println("Error:", err)
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
 }

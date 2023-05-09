@@ -3,7 +3,6 @@ package export
 import (
 	"cert-ripper-go/pkg/cert"
 	"cert-ripper-go/pkg/host"
-	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
 	"net/url"
@@ -56,7 +55,7 @@ func runExport(cmd *cobra.Command, args []string) {
 		var parseErr error
 		u, parseErr = url.ParseRequestURI(rawUrl)
 		if parseErr != nil {
-			fmt.Printf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
+			cmd.PrintErrf("Failed to parse URL %s . Error: %s", rawUrl, parseErr)
 			return
 		}
 	}
@@ -65,12 +64,12 @@ func runExport(cmd *cobra.Command, args []string) {
 
 	certs, fetchErr := cert.GetCertificateChain(u)
 	if fetchErr != nil {
-		fmt.Println("Failed to fetch the certificate chain", fetchErr)
+		cmd.PrintErrf("Failed to fetch the certificate chain. Error: %s", fetchErr)
 		return
 	}
 
 	if ioErr := cert.SaveCertificates(path, certs, CertFormatIds[certFormat][0]); ioErr != nil {
-		fmt.Println("Failed to save a certificate from the chain", ioErr)
+		cmd.PrintErrf("Failed to save a certificate from the chain. Error: %s", ioErr)
 		return
 	}
 }
@@ -90,7 +89,7 @@ func includeExportFlags(cmd *cobra.Command) {
 		"Exported certificate format; can be 'pem' (default if omitted), 'crt', 'cer', 'der', 'p7b', 'p7c' or 'txt'")
 
 	if err := cmd.MarkFlagRequired("url"); err != nil {
-		fmt.Println("Failed to mark flag as required", err)
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
 }

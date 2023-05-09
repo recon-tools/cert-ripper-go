@@ -2,7 +2,6 @@ package request
 
 import (
 	"cert-ripper-go/pkg/cert"
-	"fmt"
 	"github.com/spf13/cobra"
 )
 
@@ -20,13 +19,13 @@ var (
 func runDecodeRequest(cmd *cobra.Command, args []string) {
 	csr, csrErr := cert.DecodeCSR(csrPath)
 	if csrErr != nil {
-		fmt.Printf("Failed to decode csr with path %s. Error: %s", csrPath, csrErr)
+		cmd.PrintErrf("Failed to decode csr with path %s. Error: %s", csrPath, csrErr)
 		return
 	}
 
 	ioErr := cert.PrintCSR(csr)
 	if ioErr != nil {
-		fmt.Printf("Failed to print csr with path %s. Error: %s", csrPath, ioErr)
+		cmd.PrintErrf("Failed to print csr with path %s. Error: %s", csrPath, ioErr)
 		return
 	}
 }
@@ -40,7 +39,7 @@ func includeDecodeRequestFlags(cmd *cobra.Command) {
 		"Path for of the CSR file.")
 
 	if err := cmd.MarkFlagRequired("path"); err != nil {
-		fmt.Println("Failed to mark flag as required", err)
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
 }

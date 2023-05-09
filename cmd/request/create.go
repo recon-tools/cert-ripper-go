@@ -3,7 +3,6 @@ package request
 import (
 	"cert-ripper-go/cmd/common"
 	"cert-ripper-go/pkg/cert"
-	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
 )
@@ -41,20 +40,20 @@ func runCreateRequest(cmd *cobra.Command, args []string) {
 
 	csr, privateKey, csrErr := cert.CreateCSR(request)
 	if csrErr != nil {
-		fmt.Printf("Failed create CSR. Error: %s", csrErr)
+		cmd.PrintErrf("Failed create CSR. Error: %s", csrErr)
 		return
 	}
 
 	ioErr := cert.SaveCSR(csr, targetPath)
 	if ioErr != nil {
-		fmt.Printf("Failed to save CSR to location %s. Error: %s", targetPath, ioErr)
+		cmd.PrintErrf("Failed to save CSR to location %s. Error: %s", targetPath, ioErr)
 		return
 	}
 
 	privateKeyTargetPath := targetPath + ".key"
 	ioErr = cert.SavePrivateKey(privateKey, privateKeyTargetPath)
 	if ioErr != nil {
-		fmt.Printf("Failed to save Private KEY for CSR to location %s. Error: %s", privateKeyTargetPath, ioErr)
+		cmd.PrintErrf("Failed to save Private KEY for CSR to location %s. Error: %s", privateKeyTargetPath, ioErr)
 		return
 	}
 }
@@ -86,32 +85,32 @@ func includeCreateRequestFlags(cmd *cobra.Command) {
 			"SHA256WithECDSA, SHA384WithECDSA, SHA512WithECDSA)")
 
 	if err := cmd.MarkFlagRequired("commonName"); err != nil {
-		fmt.Println("Failed to mark flag as required", err)
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
 
 	if err := cmd.MarkFlagRequired("country"); err != nil {
-		fmt.Println("Failed to mark flag as required", err)
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
 
 	if err := cmd.MarkFlagRequired("city"); err != nil {
-		fmt.Println("Failed to mark flag as required", err)
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
 
 	if err := cmd.MarkFlagRequired("organization"); err != nil {
-		fmt.Println("Failed to mark flag as required", err)
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
 
 	if err := cmd.MarkFlagRequired("email"); err != nil {
-		fmt.Println("Failed to mark flag as required", err)
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
 
 	if err := cmd.MarkFlagRequired("signatureAlg"); err != nil {
-		fmt.Println("Failed to mark flag as required", err)
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
 }

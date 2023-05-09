@@ -3,7 +3,6 @@ package print
 import (
 	"cert-ripper-go/pkg/cert"
 	"cert-ripper-go/pkg/host"
-	"fmt"
 	"github.com/spf13/cobra"
 	"net/url"
 )
@@ -29,19 +28,19 @@ func runPrint(cmd *cobra.Command, args []string) {
 		var parseErr error
 		u, parseErr = url.ParseRequestURI(rawUrl)
 		if parseErr != nil {
-			fmt.Printf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
+			cmd.PrintErrf("Failed to parse URL %s\nError: %s", rawUrl, parseErr)
 			return
 		}
 	}
 
 	certs, fetchErr := cert.GetCertificateChain(u)
 	if fetchErr != nil {
-		fmt.Println("Failed to fetch certificate chain", fetchErr)
+		cmd.PrintErrf("Failed to fetch certificate chain. Error: %s", fetchErr)
 		return
 	}
 
 	if ioErr := cert.PrintCertificates(u.Host, certs); ioErr != nil {
-		fmt.Println("Failed to print certificate to the standard output", ioErr)
+		cmd.PrintErrf("Failed to print certificate to the standard output. Error: %s", ioErr)
 		return
 	}
 }
@@ -55,7 +54,7 @@ func includePrintFlags(cmd *cobra.Command) {
 		"URL or hostname for which we would want to grab the certificate chain.")
 
 	if err := cmd.MarkFlagRequired("url"); err != nil {
-		fmt.Println("Failed to mark flag as required", err)
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
 }
