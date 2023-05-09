@@ -148,7 +148,7 @@ func SaveCertificates(folderPath string, chain []*x509.Certificate, certFormat s
 			prefix,
 			strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", ".")},
 			"."))
-		if err := saveCertificate(path, cert, certFormat); err != nil {
+		if err := SaveCertificate(path, cert, certFormat); err != nil {
 			return fmt.Errorf("failed to save certificate, error: %w", err)
 		}
 	}
@@ -156,8 +156,8 @@ func SaveCertificates(folderPath string, chain []*x509.Certificate, certFormat s
 	return nil
 }
 
-// Save a certificate to the location specified by the `path` using a supported format
-func saveCertificate(path string, cert *x509.Certificate, certFormat string) error {
+// SaveCertificate saves a certificate to the location specified by the `path` using a supported format
+func SaveCertificate(path string, cert *x509.Certificate, certFormat string) error {
 	path = strings.Join([]string{path, certFormat}, ".")
 	formatToAction := map[string]func(string, *x509.Certificate) error{
 		"pem": saveAsPem,
@@ -303,46 +303,37 @@ func isCertificateRevoked(cert *x509.Certificate) (bool, error) {
 	return false, nil
 }
 
+type CertificateInput struct {
+	HostName     string
+	NotBefore    time.Time
+	ValidFor     time.Duration
+	IsCA         bool
+	Organization string
+	PrivateKey   any
+}
+
 // CreateCertificate generates a self-signed X509 certificate
-func CreateCertificate(hostName string,
-	notBefore time.Time,
-	validFor time.Duration,
-	isCa bool,
-	organization string,
-	privateKey any) (*x509.Certificate, error) {
-
-	notAfter := notBefore.Add(validFor)
-
+func CreateCertificate(certInput CertificateInput) (*x509.Certificate, error) {
 	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
 	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
 	if err != nil {
 		return nil, err
 	}
 
-	// ECDSA, ED25519 and RSA subject keys should have the DigitalSignature
-	// KeyUsage bits set in the x509.Certificate template
-	keyUsage := x509.KeyUsageDigitalSignature
-	// Only RSA subject keys should have the KeyEncipherment KeyUsage bits set. In
-	// the context of TLS this KeyUsage is particular to RSA key exchange and
-	// authentication.
-	if _, isRSA := privateKey.(*rsa.PrivateKey); isRSA {
-		keyUsage |= x509.KeyUsageKeyEncipherment
-	}
-
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization: []string{organization},
+			Organization: []string{certInput.Organization},
 		},
-		NotBefore: notBefore,
-		NotAfter:  notAfter,
+		NotBefore: certInput.NotBefore,
+		NotAfter:  certInput.NotBefore.Add(certInput.ValidFor),
 
-		KeyUsage:              keyUsage,
+		KeyUsage:              getKeyUsage(certInput.PrivateKey),
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
 		BasicConstraintsValid: true,
 	}
 
-	hosts := strings.Split(hostName, ",")
+	hosts := strings.Split(certInput.HostName, ",")
 	for _, h := range hosts {
 		if ip := net.ParseIP(h); ip != nil {
 			template.IPAddresses = append(template.IPAddresses, ip)
@@ -351,7 +342,47 @@ func CreateCertificate(hostName string,
 		}
 	}
 
-	if isCa {
+	if certInput.IsCA {
+		template.IsCA = true
+		template.KeyUsage |= x509.KeyUsageCertSign
+	}
+
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, getPublicKey(certInput.PrivateKey), certInput.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+
+	return x509.ParseCertificate(derBytes)
+}
+
+// CreateCertificateFromCSR generates a self-signed X509 certificate from a CSR request
+func CreateCertificateFromCSR(request *x509.CertificateRequest,
+	notBefore time.Time,
+	validFor time.Duration,
+	isCA bool,
+	privateKey any) (*x509.Certificate, error) {
+	var serialNr big.Int
+	serialNr.SetString(request.Subject.SerialNumber, 10)
+
+	notAfter := notBefore.Add(validFor)
+
+	template := x509.Certificate{
+		SerialNumber: &serialNr,
+		Subject: pkix.Name{
+			Organization: request.Subject.Organization,
+		},
+		NotBefore: notBefore,
+		NotAfter:  notAfter,
+
+		KeyUsage:              getKeyUsage(privateKey),
+		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
+		BasicConstraintsValid: true,
+	}
+
+	template.IPAddresses = append(template.IPAddresses, request.IPAddresses...)
+	template.DNSNames = append(template.DNSNames, request.DNSNames...)
+
+	if isCA {
 		template.IsCA = true
 		template.KeyUsage |= x509.KeyUsageCertSign
 	}
@@ -362,10 +393,6 @@ func CreateCertificate(hostName string,
 	}
 
 	return x509.ParseCertificate(derBytes)
-}
-
-func CreateCertificateFromCSR(request *x509.CertificateRequest, privateKey any) (*x509.Certificate, error) {
-	return nil, nil
 }
 
 func getPublicKey(privateKey any) any {
@@ -379,4 +406,17 @@ func getPublicKey(privateKey any) any {
 	default:
 		return nil
 	}
+}
+
+func getKeyUsage(privateKey any) x509.KeyUsage {
+	// ECDSA, ED25519 and RSA subject keys should have the DigitalSignature
+	// KeyUsage bits set in the x509.Certificate template
+	keyUsage := x509.KeyUsageDigitalSignature
+	// Only RSA subject keys should have the KeyEncipherment KeyUsage bits set. In
+	// the context of TLS this KeyUsage is particular to RSA key exchange and
+	// authentication.
+	if _, isRSA := privateKey.(*rsa.PrivateKey); isRSA {
+		keyUsage |= x509.KeyUsageKeyEncipherment
+	}
+	return keyUsage
 }

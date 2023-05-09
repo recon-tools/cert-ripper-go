@@ -51,8 +51,16 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	certificate, err := cert.CreateCertificate(hostName, validFromDateTime, time.Duration(validFor*3600*24), isCa,
-		organization, privateKey)
+	certInput := cert.CertificateInput{
+		HostName:     hostName,
+		NotBefore:    validFromDateTime,
+		ValidFor:     time.Duration(validFor) * time.Hour * 24,
+		IsCA:         isCa,
+		Organization: organization,
+		PrivateKey:   privateKey,
+	}
+
+	certificate, err := cert.CreateCertificate(certInput)
 
 	if err := cert.SaveCertificates(targetPath, []*x509.Certificate{certificate}, "pem"); err != nil {
 		cmd.PrintErrf("Failed to save certificate. Error: %s", err)
