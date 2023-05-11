@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	GenerateFromStdioCommand = &cobra.Command{
+	Cmd = &cobra.Command{
 		Use:   "fromstdio",
 		Short: "Generate a self-signed certificate",
 		Long:  ``,
@@ -69,7 +69,7 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	includeGenerateFromStdio(GenerateFromStdioCommand)
+	includeGenerateFromStdio(Cmd)
 }
 
 func includeGenerateFromStdio(cmd *cobra.Command) {

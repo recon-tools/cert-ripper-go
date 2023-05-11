@@ -7,7 +7,7 @@ import (
 )
 
 var (
-	GenerateFromCsrCommand = &cobra.Command{
+	Cmd = &cobra.Command{
 		Use:   "fromcsr",
 		Short: "Generate a self-signed certificate from a CSR request",
 		Long:  ``,
@@ -60,7 +60,7 @@ func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	includeGenerateFromCsrFlags(GenerateFromCsrCommand)
+	includeGenerateFromCsrFlags(Cmd)
 }
 
 func includeGenerateFromCsrFlags(cmd *cobra.Command) {

@@ -23,37 +23,39 @@ const (
 )
 
 type CertificateRequest struct {
-	CommonName   string
-	Country      string
-	State        string
-	City         string
-	Organization string
-	OrgUnit      string
-	Email        string
-	SignatureAlg x509.SignatureAlgorithm
+	CommonName     string
+	Country        []string
+	State          []string
+	City           []string
+	Organization   []string
+	OrgUnit        []string
+	EmailAddresses []string
+	OidEmail       string
+	SignatureAlg   x509.SignatureAlgorithm
 }
 
 // CreateCSR creates a new Certificate Signature Request and returns it as a slice of bytes
-func CreateCSR(request CertificateRequest) ([]byte, any, error) {
+func CreateCSR(request CertificateRequest) (*x509.CertificateRequest, any, error) {
 	var oidEmailAddress = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
 
 	subj := pkix.Name{
-		CommonName:         request.CommonName,
-		Country:            []string{request.Country},
-		Province:           []string{request.State},
-		Locality:           []string{request.City},
-		Organization:       []string{request.Organization},
-		OrganizationalUnit: []string{request.OrgUnit},
+		CommonName: request.CommonName,
 		ExtraNames: []pkix.AttributeTypeAndValue{
 			{
 				Type: oidEmailAddress,
 				Value: asn1.RawValue{
 					Tag:   asn1.TagIA5String,
-					Bytes: []byte(request.Email),
+					Bytes: []byte(request.OidEmail),
 				},
 			},
 		},
 	}
+
+	subj.Country = append(subj.Country, request.Country...)
+	subj.Province = append(subj.Province, request.State...)
+	subj.Locality = append(subj.Locality, request.City...)
+	subj.Organization = append(subj.Organization, request.Organization...)
+	subj.OrganizationalUnit = append(subj.OrganizationalUnit, request.OrgUnit...)
 
 	keys, keyErr := GeneratePrivateKey(request.SignatureAlg)
 	if keyErr != nil {
@@ -65,16 +67,23 @@ func CreateCSR(request CertificateRequest) ([]byte, any, error) {
 		SignatureAlgorithm: request.SignatureAlg,
 	}
 
-	csr, csrErr := x509.CreateCertificateRequest(rand.Reader, &template, keys)
+	template.EmailAddresses = append(template.EmailAddresses, request.EmailAddresses...)
+
+	csrBytes, csrErr := x509.CreateCertificateRequest(rand.Reader, &template, keys)
 	if csrErr != nil {
 		return nil, nil, csrErr
+	}
+
+	csr, csrParseErr := x509.ParseCertificateRequest(csrBytes)
+	if csrParseErr != nil {
+		return nil, nil, csrParseErr
 	}
 
 	return csr, keys, nil
 }
 
 // SaveCSR saves the CSR in PEM format to a location
-func SaveCSR(csr []byte, targetPath string) error {
+func SaveCSR(csr *x509.CertificateRequest, targetPath string) error {
 	path := filepath.FromSlash(targetPath)
 
 	if _, ioErr := os.Stat(path); ioErr == nil {
@@ -83,7 +92,7 @@ func SaveCSR(csr []byte, targetPath string) error {
 
 	pemData := pem.EncodeToMemory(&pem.Block{
 		Type:  csrPEMBlockType,
-		Bytes: csr,
+		Bytes: csr.Raw,
 	})
 
 	if ioErr := os.WriteFile(path, pemData, 0644); ioErr != nil {

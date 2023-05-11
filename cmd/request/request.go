@@ -1,6 +1,8 @@
 package request
 
 import (
+	"cert-ripper-go/cmd/request/create"
+	"cert-ripper-go/cmd/request/decode"
 	"github.com/spf13/cobra"
 )
 
@@ -14,6 +16,6 @@ var (
 )
 
 func init() {
-	Cmd.AddCommand(createCmd)
-	Cmd.AddCommand(decodeCmd)
+	Cmd.AddCommand(create.Cmd)
+	Cmd.AddCommand(decode.Cmd)
 }

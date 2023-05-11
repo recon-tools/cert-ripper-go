@@ -1,4 +1,4 @@
-package request
+package decode
 
 import (
 	"cert-ripper-go/pkg/cert"
@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	decodeCmd = &cobra.Command{
+	Cmd = &cobra.Command{
 		Use:   "decode",
 		Short: "Decode and print CSR file to the STDOUT in OpenSSL text format",
 		Long:  ``,
@@ -31,7 +31,7 @@ func runDecodeRequest(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	includeDecodeRequestFlags(decodeCmd)
+	includeDecodeRequestFlags(Cmd)
 }
 
 func includeDecodeRequestFlags(cmd *cobra.Command) {

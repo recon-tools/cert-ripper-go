@@ -1,4 +1,4 @@
-package request
+package create
 
 import (
 	"cert-ripper-go/cmd/common"
@@ -8,34 +8,36 @@ import (
 )
 
 var (
-	createCmd = &cobra.Command{
+	Cmd = &cobra.Command{
 		Use:   "create",
 		Short: "Create a CSR (certificate signing request)",
 		Long:  ``,
 		Run:   runCreateRequest,
 	}
 
-	commonName   string
-	country      string
-	state        string
-	city         string
-	organization string
-	orgUnit      string
-	email        string
-	targetPath   string
-	signatureAlg common.SignatureAlgorithm
+	commonName     string
+	country        []string
+	state          []string
+	city           []string
+	organization   []string
+	orgUnit        []string
+	targetPath     string
+	signatureAlg   common.SignatureAlgorithm
+	oidEmail       string
+	emailAddresses []string
 )
 
 func runCreateRequest(cmd *cobra.Command, args []string) {
 	request := cert.CertificateRequest{
-		CommonName:   commonName,
-		Country:      country,
-		State:        state,
-		City:         city,
-		Organization: organization,
-		OrgUnit:      orgUnit,
-		Email:        email,
-		SignatureAlg: common.SignatureAlgTox509[signatureAlg],
+		CommonName:     commonName,
+		Country:        country,
+		State:          state,
+		City:           city,
+		Organization:   organization,
+		OrgUnit:        orgUnit,
+		OidEmail:       oidEmail,
+		EmailAddresses: emailAddresses,
+		SignatureAlg:   common.SignatureAlgTox509[signatureAlg],
 	}
 
 	csr, privateKey, csrErr := cert.CreateCSR(request)
@@ -59,30 +61,33 @@ func runCreateRequest(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	includeCreateRequestFlags(createCmd)
+	includeCreateRequestFlags(Cmd)
 }
 
 func includeCreateRequestFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&commonName, "commonName", "",
 		"Common name (example: domain.com).")
-	cmd.Flags().StringVar(&country, "country", "",
+	cmd.Flags().StringSlice("country", country,
 		"Country code (example: US).")
-	cmd.Flags().StringVar(&state, "state", "",
+	cmd.Flags().StringSlice("state", state,
 		"Province/State (example: California)")
-	cmd.Flags().StringVar(&city, "city", "",
+	cmd.Flags().StringSlice("city", city,
 		"Locality/City (example: New-York)")
-	cmd.Flags().StringVar(&organization, "organization", "",
+	cmd.Flags().StringSlice("organization", organization,
 		"Organization (example: Acme)")
-	cmd.Flags().StringVar(&orgUnit, "organizationUnit", "",
+	cmd.Flags().StringSlice("organizationUnit", orgUnit,
 		"Organization unit (example: IT)")
-	cmd.Flags().StringVar(&email, "email", "",
-		"Email address")
+	cmd.Flags().StringVar(&oidEmail, "oidEmail", "",
+		"Object Identifier (OID) Email Address")
+	cmd.Flags().StringSlice("email", emailAddresses,
+		"Subject Alternative Email Addresses")
 	cmd.Flags().StringVar(&targetPath, "targetPath", ".",
 		"Target path for the CSR to be saved.")
 	cmd.Flags().Var(
 		enumflag.New(&signatureAlg, "signatureAlg", common.SignatureAlgIds, enumflag.EnumCaseInsensitive),
-		"signatureAlg", "Signature Algorithm (allowed values: SHA256WithRSA, SHA384WithRSA, SHA512WithRSA,"+
-			"SHA256WithECDSA, SHA384WithECDSA, SHA512WithECDSA)")
+		"signatureAlg", "Signature Algorithm (allowed values: SHA256WithRSA (default if omitted)"+
+			", SHA384WithRSA, SHA512WithRSA, SHA256WithECDSA, SHA384WithECDSA, SHA512WithECDSA)")
+	cmd.PersistentFlags().Lookup("signatureAlg").NoOptDefVal = "SHA256WithRSA"
 
 	if err := cmd.MarkFlagRequired("commonName"); err != nil {
 		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
@@ -94,22 +99,7 @@ func includeCreateRequestFlags(cmd *cobra.Command) {
 		return
 	}
 
-	if err := cmd.MarkFlagRequired("city"); err != nil {
-		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
-		return
-	}
-
 	if err := cmd.MarkFlagRequired("organization"); err != nil {
-		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
-		return
-	}
-
-	if err := cmd.MarkFlagRequired("email"); err != nil {
-		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
-		return
-	}
-
-	if err := cmd.MarkFlagRequired("signatureAlg"); err != nil {
 		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
