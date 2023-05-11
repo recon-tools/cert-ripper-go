@@ -139,9 +139,14 @@ Flags:
 Example:
 
 ```bash
-cert-ripper.exe request decode --path="certs/request.csr"
+cert-ripper request decode --path="certs/request.csr"
 ```
 
+### `generate` command
+
+```bash
+cert-ripper generate fromstdio --host=example.com --validFrom="2023-05-09 15:04:05" --validFor=3600 --targetPath=certs --isCa
+```
 
 ## Download and Install
 

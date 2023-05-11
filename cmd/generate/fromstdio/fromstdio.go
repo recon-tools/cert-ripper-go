@@ -1,4 +1,4 @@
-package generate
+package fromstdio
 
 import (
 	"cert-ripper-go/cmd/common"
@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	generateFromStdioCommand = &cobra.Command{
+	GenerateFromStdioCommand = &cobra.Command{
 		Use:   "fromstdio",
 		Short: "Generate a self-signed certificate",
 		Long:  ``,
@@ -69,7 +69,7 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 }
 
 func init() {
-	includeGenerateFromStdio(generateFromStdioCommand)
+	includeGenerateFromStdio(GenerateFromStdioCommand)
 }
 
 func includeGenerateFromStdio(cmd *cobra.Command) {

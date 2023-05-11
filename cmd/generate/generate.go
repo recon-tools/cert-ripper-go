@@ -1,6 +1,10 @@
 package generate
 
-import "github.com/spf13/cobra"
+import (
+	"cert-ripper-go/cmd/generate/fromcsr"
+	"cert-ripper-go/cmd/generate/fromstdio"
+	"github.com/spf13/cobra"
+)
 
 var (
 	Cmd = &cobra.Command{
@@ -12,6 +16,6 @@ var (
 )
 
 func init() {
-	Cmd.AddCommand(generateFromCsrCommand)
-	Cmd.AddCommand(generateFromStdioCommand)
+	Cmd.AddCommand(fromcsr.GenerateFromCsrCommand)
+	Cmd.AddCommand(fromstdio.GenerateFromStdioCommand)
 }

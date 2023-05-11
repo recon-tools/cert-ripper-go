@@ -7,6 +7,9 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"encoding/pem"
+	"fmt"
+	"os"
 )
 
 func GeneratePrivateKey(signatureAlg x509.SignatureAlgorithm) (keys any, err error) {
@@ -53,4 +56,20 @@ func GeneratePrivateKey(signatureAlg x509.SignatureAlgorithm) (keys any, err err
 		}
 	}
 	return keys, nil
+}
+
+// ReadKey reads the private key from a .PEM file
+func ReadKey(path string) (any, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	pemBlock, _ := pem.Decode(data)
+	if pemBlock == nil {
+		return nil, fmt.Errorf("cannot find the next PEM formatted block for file %s", path)
+	}
+	if pemBlock.Type != rsaPrivateKeyType || len(pemBlock.Headers) != 0 {
+		return nil, fmt.Errorf("unmatched type or headers for file %s", path)
+	}
+	return x509.ParsePKCS8PrivateKey(pemBlock.Bytes)
 }

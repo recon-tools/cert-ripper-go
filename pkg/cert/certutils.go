@@ -366,13 +366,23 @@ func CreateCertificateFromCSR(request *x509.CertificateRequest,
 
 	notAfter := notBefore.Add(validFor)
 
+	subject := pkix.Name{
+		CommonName:   request.Subject.CommonName,
+		SerialNumber: request.Subject.SerialNumber,
+	}
+	subject.Country = append(subject.Country, request.Subject.Country...)
+	subject.Province = append(subject.Province, request.Subject.Province...)
+	subject.Locality = append(subject.Locality, request.Subject.Locality...)
+	subject.StreetAddress = append(subject.StreetAddress, request.Subject.StreetAddress...)
+	subject.PostalCode = append(subject.PostalCode, request.Subject.PostalCode...)
+	subject.Organization = append(subject.Organization, request.Subject.Organization...)
+	subject.OrganizationalUnit = append(subject.OrganizationalUnit, request.Subject.OrganizationalUnit...)
+
 	template := x509.Certificate{
 		SerialNumber: &serialNr,
-		Subject: pkix.Name{
-			Organization: request.Subject.Organization,
-		},
-		NotBefore: notBefore,
-		NotAfter:  notAfter,
+		Subject:      subject,
+		NotBefore:    notBefore,
+		NotAfter:     notAfter,
 
 		KeyUsage:              getKeyUsage(privateKey),
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},

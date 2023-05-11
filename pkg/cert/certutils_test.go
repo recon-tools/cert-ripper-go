@@ -10,7 +10,6 @@ import (
 func TestCreateCertificate(t *testing.T) {
 	hostname := "example.com"
 	days := time.Duration(10) * time.Hour * 24
-	isCa := true
 	org := "ACME"
 
 	validFrom, parseErr := time.Parse("2006-01-02 15:04:05", "2023-05-10 02:20:32")
@@ -23,7 +22,7 @@ func TestCreateCertificate(t *testing.T) {
 		HostName:     hostname,
 		NotBefore:    validFrom,
 		ValidFor:     days,
-		IsCA:         isCa,
+		IsCA:         true,
 		Organization: org,
 		PrivateKey:   privateKey,
 	})
@@ -34,5 +33,30 @@ func TestCreateCertificate(t *testing.T) {
 	assert.Equal(t, validFrom.Unix(), cert.NotBefore.Unix())
 	assert.Equal(t, validFrom.Add(days).Unix(), cert.NotAfter.Unix())
 	assert.Contains(t, cert.Subject.Organization, org)
-	assert.Equal(t, isCa, cert.IsCA)
+	assert.True(t, cert.IsCA)
+}
+
+func TestCreateCertificateFromCSR(t *testing.T) {
+	days := time.Duration(10) * time.Hour * 24
+	validFrom, parseErr := time.Parse("2006-01-02 15:04:05", "2023-05-10 02:20:32")
+	assert.NoError(t, parseErr)
+
+	csrPath := "test/test"
+	csr, csrErr := DecodeCSR(csrPath)
+	assert.NoError(t, csrErr)
+
+	privateKeyPath := "test/test.key"
+	privateKey, keyErr := ReadKey(privateKeyPath)
+	assert.NoError(t, keyErr)
+
+	cert, err := CreateCertificateFromCSR(csr, validFrom, days, true, privateKey)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cert)
+	assert.Equal(t, "ervinszilagyi.dev", cert.Subject.CommonName)
+	assert.Equal(t, []string{"ACME"}, cert.Subject.Organization)
+	assert.Equal(t, []string{"IT"}, cert.Subject.OrganizationalUnit)
+	assert.Equal(t, []string{"RO"}, cert.Subject.Country)
+	assert.Equal(t, []string{"TG Mures"}, cert.Subject.Locality)
+	assert.Equal(t, x509.SHA256WithRSA, cert.SignatureAlgorithm)
 }
