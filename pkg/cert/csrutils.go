@@ -24,12 +24,14 @@ const (
 
 type CertificateRequest struct {
 	CommonName     string
-	Country        []string
-	State          []string
-	City           []string
-	Organization   []string
-	OrgUnit        []string
-	EmailAddresses []string
+	Country        *[]string
+	State          *[]string
+	City           *[]string
+	Street         *[]string
+	PostalCode     *[]string
+	Organization   *[]string
+	OrgUnit        *[]string
+	EmailAddresses *[]string
 	OidEmail       string
 	SignatureAlg   x509.SignatureAlgorithm
 }
@@ -40,7 +42,10 @@ func CreateCSR(request CertificateRequest) (*x509.CertificateRequest, any, error
 
 	subj := pkix.Name{
 		CommonName: request.CommonName,
-		ExtraNames: []pkix.AttributeTypeAndValue{
+	}
+
+	if request.OidEmail != "" {
+		subj.ExtraNames = []pkix.AttributeTypeAndValue{
 			{
 				Type: oidEmailAddress,
 				Value: asn1.RawValue{
@@ -48,14 +53,16 @@ func CreateCSR(request CertificateRequest) (*x509.CertificateRequest, any, error
 					Bytes: []byte(request.OidEmail),
 				},
 			},
-		},
+		}
 	}
 
-	subj.Country = append(subj.Country, request.Country...)
-	subj.Province = append(subj.Province, request.State...)
-	subj.Locality = append(subj.Locality, request.City...)
-	subj.Organization = append(subj.Organization, request.Organization...)
-	subj.OrganizationalUnit = append(subj.OrganizationalUnit, request.OrgUnit...)
+	subj.Country = append([]string{}, *request.Country...)
+	subj.Province = append([]string{}, *request.State...)
+	subj.Locality = append([]string{}, *request.City...)
+	subj.StreetAddress = append([]string{}, *request.Street...)
+	subj.PostalCode = append([]string{}, *request.PostalCode...)
+	subj.Organization = append([]string{}, *request.Organization...)
+	subj.OrganizationalUnit = append([]string{}, *request.OrgUnit...)
 
 	keys, keyErr := GeneratePrivateKey(request.SignatureAlg)
 	if keyErr != nil {
@@ -67,7 +74,7 @@ func CreateCSR(request CertificateRequest) (*x509.CertificateRequest, any, error
 		SignatureAlgorithm: request.SignatureAlg,
 	}
 
-	template.EmailAddresses = append(template.EmailAddresses, request.EmailAddresses...)
+	template.EmailAddresses = append(template.EmailAddresses, *request.EmailAddresses...)
 
 	csrBytes, csrErr := x509.CreateCertificateRequest(rand.Reader, &template, keys)
 	if csrErr != nil {

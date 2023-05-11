@@ -9,6 +9,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"encoding/asn1"
 	"encoding/pem"
 	"fmt"
 	"github.com/smallstep/certinfo"
@@ -304,12 +305,22 @@ func isCertificateRevoked(cert *x509.Certificate) (bool, error) {
 }
 
 type CertificateInput struct {
-	HostName     string
-	NotBefore    time.Time
-	ValidFor     time.Duration
-	IsCA         bool
-	Organization string
-	PrivateKey   any
+	HostName  string
+	NotBefore time.Time
+	ValidFor  time.Duration
+	IsCA      bool
+
+	Country        *[]string
+	State          *[]string
+	City           *[]string
+	StreetAddress  *[]string
+	PostalCode     *[]string
+	Organization   *[]string
+	OrgUnit        *[]string
+	EmailAddresses *[]string
+	OidEmail       string
+
+	PrivateKey any
 }
 
 // CreateCertificate generates a self-signed X509 certificate
@@ -320,13 +331,36 @@ func CreateCertificate(certInput CertificateInput) (*x509.Certificate, error) {
 		return nil, err
 	}
 
+	subj := pkix.Name{
+		CommonName: certInput.HostName,
+	}
+
+	if certInput.OidEmail != "" {
+		var oidEmailAddress = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
+		subj.ExtraNames = []pkix.AttributeTypeAndValue{
+			{
+				Type: oidEmailAddress,
+				Value: asn1.RawValue{
+					Tag:   asn1.TagIA5String,
+					Bytes: []byte(certInput.OidEmail),
+				},
+			},
+		}
+	}
+
+	subj.Country = append([]string{}, *certInput.Country...)
+	subj.Province = append([]string{}, *certInput.State...)
+	subj.Locality = append([]string{}, *certInput.City...)
+	subj.StreetAddress = append([]string{}, *certInput.StreetAddress...)
+	subj.PostalCode = append([]string{}, *certInput.PostalCode...)
+	subj.Organization = append([]string{}, *certInput.Organization...)
+	subj.OrganizationalUnit = append([]string{}, *certInput.OrgUnit...)
+
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
-		Subject: pkix.Name{
-			Organization: []string{certInput.Organization},
-		},
-		NotBefore: certInput.NotBefore,
-		NotAfter:  certInput.NotBefore.Add(certInput.ValidFor),
+		Subject:      subj,
+		NotBefore:    certInput.NotBefore,
+		NotAfter:     certInput.NotBefore.Add(certInput.ValidFor),
 
 		KeyUsage:              getKeyUsage(certInput.PrivateKey),
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth},
