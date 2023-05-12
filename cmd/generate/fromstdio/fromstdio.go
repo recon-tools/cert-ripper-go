@@ -47,26 +47,26 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 		var parseErr error
 		validFromDateTime, parseErr = time.Parse("2006-01-02 15:04:05", validFrom)
 		if parseErr != nil {
-			cmd.PrintErrf("Invalid date format %s", validFrom)
+			cmd.PrintErrf("Invalid date format %s. Error: %s", validFrom, parseErr)
 			return
 		}
 	}
 
-	privateKey, err := cert.GeneratePrivateKey(common.SignatureAlgTox509[signatureAlg])
-	if err != nil {
-		cmd.PrintErrf("Failed to generate private key. Error: %s", err)
+	privateKey, keyErr := cert.GeneratePrivateKey(common.SignatureAlgTox509[signatureAlg])
+	if keyErr != nil {
+		cmd.PrintErrf("Failed to generate private key. Error: %s", keyErr)
 		return
 	}
 
 	certInput := cert.CertificateInput{
-		HostName:       hostName,
+		CommonName:     hostName,
 		NotBefore:      validFromDateTime,
 		ValidFor:       time.Duration(validFor) * time.Hour * 24,
 		IsCA:           isCa,
 		Country:        country,
 		State:          state,
 		City:           city,
-		StreetAddress:  streetAddress,
+		Street:         streetAddress,
 		PostalCode:     postalCode,
 		Organization:   organization,
 		OrgUnit:        orgUnit,
@@ -75,10 +75,14 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 		PrivateKey:     privateKey,
 	}
 
-	certificate, err := cert.CreateCertificate(certInput)
+	certificate, certErr := cert.CreateCertificate(certInput)
+	if certErr != nil {
+		cmd.PrintErrf("Failed to create certificate. Error: %s", certErr)
+		return
+	}
 
-	if err := cert.SaveCertificate(targetPath, certificate, "pem"); err != nil {
-		cmd.PrintErrf("Failed to save certificate. Error: %s", err)
+	if saveErr := cert.SaveCertificate(targetPath, certificate, "pem"); saveErr != nil {
+		cmd.PrintErrf("Failed to save certificate. Error: %s", saveErr)
 		return
 	}
 }

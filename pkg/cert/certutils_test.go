@@ -7,32 +7,72 @@ import (
 	"time"
 )
 
-func TestCreateCertificate(t *testing.T) {
-	hostname := "example.com"
-	days := time.Duration(10) * time.Hour * 24
-	org := "ACME"
-
+func TestCreateCertificateRequiredFields(t *testing.T) {
 	validFrom, parseErr := time.Parse("2006-01-02 15:04:05", "2023-05-10 02:20:32")
 	assert.NoError(t, parseErr)
 
 	privateKey, keyErr := GeneratePrivateKey(x509.PureEd25519)
 	assert.NoError(t, keyErr)
 
-	cert, err := CreateCertificate(CertificateInput{
-		HostName:     hostname,
-		NotBefore:    validFrom,
-		ValidFor:     days,
-		IsCA:         true,
-		Organization: org,
-		PrivateKey:   privateKey,
-	})
+	certInput := CertificateInput{
+		CommonName: "example.com",
+		NotBefore:  validFrom,
+		ValidFor:   time.Duration(10) * time.Hour * 24,
+		IsCA:       true,
+		PrivateKey: privateKey,
+	}
+
+	cert, err := CreateCertificate(certInput)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, cert)
-	assert.Contains(t, cert.DNSNames, hostname)
+	assert.Contains(t, cert.Subject.CommonName, certInput.CommonName)
 	assert.Equal(t, validFrom.Unix(), cert.NotBefore.Unix())
-	assert.Equal(t, validFrom.Add(days).Unix(), cert.NotAfter.Unix())
-	assert.Contains(t, cert.Subject.Organization, org)
+	assert.Equal(t, validFrom.Add(certInput.ValidFor).Unix(), cert.NotAfter.Unix())
+	assert.True(t, cert.IsCA)
+}
+
+func TestCreateCertificateAllFields(t *testing.T) {
+	validFrom, parseErr := time.Parse("2006-01-02 15:04:05", "2023-05-10 02:20:32")
+	assert.NoError(t, parseErr)
+
+	privateKey, keyErr := GeneratePrivateKey(x509.PureEd25519)
+	assert.NoError(t, keyErr)
+
+	certInput := CertificateInput{
+		CommonName:              "example.com",
+		NotBefore:               validFrom,
+		ValidFor:                time.Duration(10) * time.Hour * 24,
+		IsCA:                    true,
+		PrivateKey:              privateKey,
+		Country:                 &[]string{"RO"},
+		State:                   &[]string{"Mures"},
+		City:                    &[]string{"Tg Mures"},
+		Street:                  &[]string{"Principala"},
+		PostalCode:              &[]string{"555222"},
+		Organization:            &[]string{"ACME"},
+		OrgUnit:                 &[]string{"IT"},
+		EmailAddresses:          &[]string{"mail@ervinszilagyi.dev"},
+		OidEmail:                "mail@dev.com",
+		SubjectAlternativeHosts: &[]string{"alter.example.com"},
+	}
+
+	cert, err := CreateCertificate(certInput)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cert)
+	assert.Equal(t, validFrom.Unix(), cert.NotBefore.Unix())
+	assert.Equal(t, validFrom.Add(certInput.ValidFor).Unix(), cert.NotAfter.Unix())
+	assert.Equal(t, cert.Subject.CommonName, certInput.CommonName)
+	assert.ElementsMatch(t, cert.Subject.Country, *certInput.Country)
+	assert.ElementsMatch(t, cert.Subject.Province, *certInput.State)
+	assert.ElementsMatch(t, cert.Subject.Locality, *certInput.City)
+	assert.ElementsMatch(t, cert.Subject.StreetAddress, *certInput.Street)
+	assert.ElementsMatch(t, cert.Subject.PostalCode, *certInput.PostalCode)
+	assert.ElementsMatch(t, cert.Subject.Organization, *certInput.Organization)
+	assert.ElementsMatch(t, cert.Subject.OrganizationalUnit, *certInput.OrgUnit)
+	assert.ElementsMatch(t, cert.DNSNames, *certInput.SubjectAlternativeHosts)
+	assert.ElementsMatch(t, cert.EmailAddresses, *certInput.EmailAddresses)
 	assert.True(t, cert.IsCA)
 }
 

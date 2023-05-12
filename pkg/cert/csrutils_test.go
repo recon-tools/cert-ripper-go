@@ -9,13 +9,13 @@ import (
 func TestCreateCSR(t *testing.T) {
 	request := CertificateRequest{
 		CommonName:     "ervinszilagyi.dev",
-		Country:        []string{"RO"},
-		State:          []string{"Romania"},
-		City:           []string{"Tg Mures"},
-		Organization:   []string{"ACME"},
-		OrgUnit:        []string{"IT"},
+		Country:        &[]string{"RO"},
+		State:          &[]string{"Romania"},
+		City:           &[]string{"Tg Mures"},
+		Organization:   &[]string{"ACME"},
+		OrgUnit:        &[]string{"IT"},
 		OidEmail:       "mail@ervinszilagyi.dev",
-		EmailAddresses: []string{"mail@ervinszilagyi.dev"},
+		EmailAddresses: &[]string{"mail@ervinszilagyi.dev"},
 		SignatureAlg:   x509.SHA512WithRSA,
 	}
 

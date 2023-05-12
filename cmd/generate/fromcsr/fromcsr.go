@@ -53,8 +53,8 @@ func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if err := cert.SaveCertificate(targetPath, certificate, "pem"); err != nil {
-		cmd.PrintErrf("Failed to save certificate. Error: %s", err)
+	if ioErr := cert.SaveCertificate(targetPath, certificate, "pem"); ioErr != nil {
+		cmd.PrintErrf("Failed to save certificate. Error: %s", ioErr)
 		return
 	}
 }

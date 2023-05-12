@@ -11,6 +11,7 @@ import (
 	"encoding/pem"
 	"fmt"
 	"github.com/smallstep/certinfo"
+	"net"
 	"os"
 	"path/filepath"
 )
@@ -33,19 +34,22 @@ type CertificateRequest struct {
 	OrgUnit        *[]string
 	EmailAddresses *[]string
 	OidEmail       string
+	SerialNumber   string
 	SignatureAlg   x509.SignatureAlgorithm
+
+	SubjectAlternativeHosts *[]string
 }
 
 // CreateCSR creates a new Certificate Signature Request and returns it as a slice of bytes
 func CreateCSR(request CertificateRequest) (*x509.CertificateRequest, any, error) {
-	var oidEmailAddress = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
-
-	subj := pkix.Name{
-		CommonName: request.CommonName,
+	subject := pkix.Name{
+		CommonName:   request.CommonName,
+		SerialNumber: request.SerialNumber,
 	}
 
 	if request.OidEmail != "" {
-		subj.ExtraNames = []pkix.AttributeTypeAndValue{
+		var oidEmailAddress = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
+		subject.ExtraNames = []pkix.AttributeTypeAndValue{
 			{
 				Type: oidEmailAddress,
 				Value: asn1.RawValue{
@@ -56,13 +60,13 @@ func CreateCSR(request CertificateRequest) (*x509.CertificateRequest, any, error
 		}
 	}
 
-	subj.Country = append([]string{}, *request.Country...)
-	subj.Province = append([]string{}, *request.State...)
-	subj.Locality = append([]string{}, *request.City...)
-	subj.StreetAddress = append([]string{}, *request.Street...)
-	subj.PostalCode = append([]string{}, *request.PostalCode...)
-	subj.Organization = append([]string{}, *request.Organization...)
-	subj.OrganizationalUnit = append([]string{}, *request.OrgUnit...)
+	subject.Country = append([]string{}, *request.Country...)
+	subject.Province = append([]string{}, *request.State...)
+	subject.Locality = append([]string{}, *request.City...)
+	subject.StreetAddress = append([]string{}, *request.Street...)
+	subject.PostalCode = append([]string{}, *request.PostalCode...)
+	subject.Organization = append([]string{}, *request.Organization...)
+	subject.OrganizationalUnit = append([]string{}, *request.OrgUnit...)
 
 	keys, keyErr := GeneratePrivateKey(request.SignatureAlg)
 	if keyErr != nil {
@@ -70,8 +74,16 @@ func CreateCSR(request CertificateRequest) (*x509.CertificateRequest, any, error
 	}
 
 	template := x509.CertificateRequest{
-		Subject:            subj,
+		Subject:            subject,
 		SignatureAlgorithm: request.SignatureAlg,
+	}
+
+	for _, altName := range *request.SubjectAlternativeHosts {
+		if ip := net.ParseIP(altName); ip != nil {
+			template.IPAddresses = append(template.IPAddresses, ip)
+		} else {
+			template.DNSNames = append(template.DNSNames, altName)
+		}
 	}
 
 	template.EmailAddresses = append(template.EmailAddresses, *request.EmailAddresses...)
@@ -102,10 +114,7 @@ func SaveCSR(csr *x509.CertificateRequest, targetPath string) error {
 		Bytes: csr.Raw,
 	})
 
-	if ioErr := os.WriteFile(path, pemData, 0644); ioErr != nil {
-		return ioErr
-	}
-	return nil
+	return os.WriteFile(path, pemData, 0644)
 }
 
 // DecodeCSR reads a PEM .csr file, decodes it
@@ -162,9 +171,6 @@ func SavePrivateKey(privateKey any, targetPath string) error {
 		Type:  pemType,
 		Bytes: privateKeyDer,
 	})
-	if ioErr := os.WriteFile(path, pemData, 0644); ioErr != nil {
-		return ioErr
-	}
 
-	return nil
+	return os.WriteFile(path, pemData, 0644)
 }

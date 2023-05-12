@@ -26,6 +26,7 @@ var (
 	targetPath     string
 	signatureAlg   common.SignatureAlgorithm
 	oidEmail       string
+	serialNumber   string
 	emailAddresses *[]string
 )
 
@@ -87,6 +88,8 @@ func includeCreateRequestFlags(cmd *cobra.Command) {
 		"Organization unit (example: IT)")
 	cmd.Flags().StringVar(&oidEmail, "oidEmail", "",
 		"Object Identifier (OID) Email Address")
+	cmd.Flags().StringVar(&serialNumber, "serialNumber", "",
+		"Serial Number")
 	emailAddresses = cmd.Flags().StringSlice("email", nil,
 		"Subject Alternative Email Addresses")
 	cmd.Flags().StringVar(&targetPath, "targetPath", "./csr.pem",

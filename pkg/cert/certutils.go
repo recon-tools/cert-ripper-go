@@ -305,20 +305,22 @@ func isCertificateRevoked(cert *x509.Certificate) (bool, error) {
 }
 
 type CertificateInput struct {
-	HostName  string
-	NotBefore time.Time
-	ValidFor  time.Duration
-	IsCA      bool
+	CommonName string
+	NotBefore  time.Time
+	ValidFor   time.Duration
+	IsCA       bool
 
 	Country        *[]string
 	State          *[]string
 	City           *[]string
-	StreetAddress  *[]string
+	Street         *[]string
 	PostalCode     *[]string
 	Organization   *[]string
 	OrgUnit        *[]string
 	EmailAddresses *[]string
 	OidEmail       string
+
+	SubjectAlternativeHosts *[]string
 
 	PrivateKey any
 }
@@ -331,13 +333,13 @@ func CreateCertificate(certInput CertificateInput) (*x509.Certificate, error) {
 		return nil, err
 	}
 
-	subj := pkix.Name{
-		CommonName: certInput.HostName,
+	subject := pkix.Name{
+		CommonName: certInput.CommonName,
 	}
 
 	if certInput.OidEmail != "" {
 		var oidEmailAddress = asn1.ObjectIdentifier{1, 2, 840, 113549, 1, 9, 1}
-		subj.ExtraNames = []pkix.AttributeTypeAndValue{
+		subject.ExtraNames = []pkix.AttributeTypeAndValue{
 			{
 				Type: oidEmailAddress,
 				Value: asn1.RawValue{
@@ -348,17 +350,37 @@ func CreateCertificate(certInput CertificateInput) (*x509.Certificate, error) {
 		}
 	}
 
-	subj.Country = append([]string{}, *certInput.Country...)
-	subj.Province = append([]string{}, *certInput.State...)
-	subj.Locality = append([]string{}, *certInput.City...)
-	subj.StreetAddress = append([]string{}, *certInput.StreetAddress...)
-	subj.PostalCode = append([]string{}, *certInput.PostalCode...)
-	subj.Organization = append([]string{}, *certInput.Organization...)
-	subj.OrganizationalUnit = append([]string{}, *certInput.OrgUnit...)
+	if certInput.Country != nil {
+		subject.Country = append([]string{}, *certInput.Country...)
+	}
+
+	if certInput.State != nil {
+		subject.Province = append([]string{}, *certInput.State...)
+	}
+
+	if certInput.City != nil {
+		subject.Locality = append([]string{}, *certInput.City...)
+	}
+
+	if certInput.Street != nil {
+		subject.StreetAddress = append([]string{}, *certInput.Street...)
+	}
+
+	if certInput.PostalCode != nil {
+		subject.PostalCode = append([]string{}, *certInput.PostalCode...)
+	}
+
+	if certInput.Organization != nil {
+		subject.Organization = append([]string{}, *certInput.Organization...)
+	}
+
+	if certInput.OrgUnit != nil {
+		subject.OrganizationalUnit = append([]string{}, *certInput.OrgUnit...)
+	}
 
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
-		Subject:      subj,
+		Subject:      subject,
 		NotBefore:    certInput.NotBefore,
 		NotAfter:     certInput.NotBefore.Add(certInput.ValidFor),
 
@@ -367,13 +389,18 @@ func CreateCertificate(certInput CertificateInput) (*x509.Certificate, error) {
 		BasicConstraintsValid: true,
 	}
 
-	hosts := strings.Split(certInput.HostName, ",")
-	for _, h := range hosts {
-		if ip := net.ParseIP(h); ip != nil {
-			template.IPAddresses = append(template.IPAddresses, ip)
-		} else {
-			template.DNSNames = append(template.DNSNames, h)
+	if certInput.SubjectAlternativeHosts != nil {
+		for _, altName := range *certInput.SubjectAlternativeHosts {
+			if ip := net.ParseIP(altName); ip != nil {
+				template.IPAddresses = append(template.IPAddresses, ip)
+			} else {
+				template.DNSNames = append(template.DNSNames, altName)
+			}
 		}
+	}
+
+	if certInput.EmailAddresses != nil {
+		template.EmailAddresses = append(template.EmailAddresses, *certInput.EmailAddresses...)
 	}
 
 	if certInput.IsCA {
@@ -381,7 +408,8 @@ func CreateCertificate(certInput CertificateInput) (*x509.Certificate, error) {
 		template.KeyUsage |= x509.KeyUsageCertSign
 	}
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, getPublicKey(certInput.PrivateKey), certInput.PrivateKey)
+	derBytes, err := x509.CreateCertificate(rand.Reader,
+		&template, &template, getPublicKey(certInput.PrivateKey), certInput.PrivateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -404,6 +432,16 @@ func CreateCertificateFromCSR(request *x509.CertificateRequest,
 		CommonName:   request.Subject.CommonName,
 		SerialNumber: request.Subject.SerialNumber,
 	}
+
+	if request.Subject.SerialNumber == "" {
+		serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
+		serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
+		if err != nil {
+			return nil, err
+		}
+		subject.SerialNumber = serialNumber.String()
+	}
+
 	subject.Country = append(subject.Country, request.Subject.Country...)
 	subject.Province = append(subject.Province, request.Subject.Province...)
 	subject.Locality = append(subject.Locality, request.Subject.Locality...)
@@ -425,6 +463,7 @@ func CreateCertificateFromCSR(request *x509.CertificateRequest,
 
 	template.IPAddresses = append(template.IPAddresses, request.IPAddresses...)
 	template.DNSNames = append(template.DNSNames, request.DNSNames...)
+	template.EmailAddresses = append(template.EmailAddresses, request.EmailAddresses...)
 
 	if isCA {
 		template.IsCA = true
@@ -439,6 +478,7 @@ func CreateCertificateFromCSR(request *x509.CertificateRequest,
 	return x509.ParseCertificate(derBytes)
 }
 
+// Extract the public key from a `PrivateKey` object
 func getPublicKey(privateKey any) any {
 	switch k := privateKey.(type) {
 	case *rsa.PrivateKey:
@@ -452,6 +492,7 @@ func getPublicKey(privateKey any) any {
 	}
 }
 
+// Get the key usage. KeyUsage represents the set of actions that are valid for a given key
 func getKeyUsage(privateKey any) x509.KeyUsage {
 	// ECDSA, ED25519 and RSA subject keys should have the DigitalSignature
 	// KeyUsage bits set in the x509.Certificate template

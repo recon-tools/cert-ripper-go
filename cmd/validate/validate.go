@@ -39,7 +39,7 @@ func runValidate(cmd *cobra.Command, args []string) {
 
 	certs, fetchErr := cert.GetCertificateChain(u)
 	if fetchErr != nil {
-		cmd.PrintErrf("Failed to fetch certificate chain", fetchErr)
+		cmd.PrintErrf("Failed to fetch certificate chain. Error: %s", fetchErr)
 		return
 	}
 
@@ -50,13 +50,13 @@ func runValidate(cmd *cobra.Command, args []string) {
 
 	isValid, validationErr := cert.ValidateCertificate(u.Host, certs[0])
 	if validationErr != nil {
-		cmd.PrintErrf("Server certificate validation failed. Reason: %s", validationErr)
+		cmd.PrintErrf("Server certificate validation failed. Error: %s", validationErr)
 		return
 	}
 	if isValid {
 		cmd.Printf("Certificate for host %s is valid", u.Host)
 	} else {
-		cmd.Println("Server certificate validation failed. Reason: none")
+		cmd.Println("Server certificate validation failed.")
 	}
 }
 
