@@ -120,7 +120,19 @@ Flags:
 Example:
 
 ```bash
-cert-ripper request create --commonName esz.dev --country RO --state Mures --city Targu-Mures --organization ACME --organizationUnit IT --targetPath certs/req.csr --email esz@dev.com --signatureAlg ED25519
+cert-ripper request create \
+--commonName=ervinszilagyi.dev \
+--country=RO \
+--email=mail@ervinszilagyi.dev \
+--oidEmail=mail@oid.com \
+--organization="home,ACME" \
+--organizationUnit="IT,HR" \
+--postalCode=222111 \
+--state=Mures \
+--city="Tg Mures" \
+--street="Gh. Doja" \
+--subjectAlternativeHosts="alter.nativ,example.com" \
+--targetPath=test.csr
 ```
 
 - `decode` command - used to decode a CSR and display it in OpenSSL format 
@@ -180,4 +192,12 @@ go build -o target/cert-ripper
 
 ```bash
 go build -ldflags "-X 'cert-ripper-go/cmd.appVersion=0.0.1'" -o target/cert-ripper
+```
+
+## Tests
+
+Running tests:
+
+```bash
+go test ./...
 ```

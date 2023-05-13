@@ -34,17 +34,22 @@ type CertificateRequest struct {
 	OrgUnit        *[]string
 	EmailAddresses *[]string
 	OidEmail       string
-	SerialNumber   string
-	SignatureAlg   x509.SignatureAlgorithm
 
 	SubjectAlternativeHosts *[]string
+
+	SignatureAlg x509.SignatureAlgorithm
 }
 
 // CreateCSR creates a new Certificate Signature Request and returns it as a slice of bytes
 func CreateCSR(request CertificateRequest) (*x509.CertificateRequest, any, error) {
+	serialNumber, serialNrErr := generateSerialNumber()
+	if serialNrErr != nil {
+		return nil, nil, serialNrErr
+	}
+
 	subject := pkix.Name{
 		CommonName:   request.CommonName,
-		SerialNumber: request.SerialNumber,
+		SerialNumber: serialNumber.String(),
 	}
 
 	if request.OidEmail != "" {
@@ -78,11 +83,13 @@ func CreateCSR(request CertificateRequest) (*x509.CertificateRequest, any, error
 		SignatureAlgorithm: request.SignatureAlg,
 	}
 
-	for _, altName := range *request.SubjectAlternativeHosts {
-		if ip := net.ParseIP(altName); ip != nil {
-			template.IPAddresses = append(template.IPAddresses, ip)
-		} else {
-			template.DNSNames = append(template.DNSNames, altName)
+	if request.SubjectAlternativeHosts != nil {
+		for _, altName := range *request.SubjectAlternativeHosts {
+			if ip := net.ParseIP(altName); ip != nil {
+				template.IPAddresses = append(template.IPAddresses, ip)
+			} else {
+				template.DNSNames = append(template.DNSNames, altName)
+			}
 		}
 	}
 

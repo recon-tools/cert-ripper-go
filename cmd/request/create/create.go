@@ -15,34 +15,35 @@ var (
 		Run:   runCreateRequest,
 	}
 
-	commonName     string
-	country        *[]string
-	state          *[]string
-	city           *[]string
-	street         *[]string
-	postalCode     *[]string
-	organization   *[]string
-	orgUnit        *[]string
-	targetPath     string
-	signatureAlg   common.SignatureAlgorithm
-	oidEmail       string
-	serialNumber   string
-	emailAddresses *[]string
+	commonName              string
+	country                 *[]string
+	state                   *[]string
+	city                    *[]string
+	street                  *[]string
+	postalCode              *[]string
+	organization            *[]string
+	orgUnit                 *[]string
+	targetPath              string
+	signatureAlg            common.SignatureAlgorithm
+	oidEmail                string
+	emailAddresses          *[]string
+	subjectAlternativeHosts *[]string
 )
 
 func runCreateRequest(cmd *cobra.Command, args []string) {
 	request := cert.CertificateRequest{
-		CommonName:     commonName,
-		Country:        country,
-		State:          state,
-		City:           city,
-		Street:         street,
-		PostalCode:     postalCode,
-		Organization:   organization,
-		OrgUnit:        orgUnit,
-		OidEmail:       oidEmail,
-		EmailAddresses: emailAddresses,
-		SignatureAlg:   common.SignatureAlgTox509[signatureAlg],
+		CommonName:              commonName,
+		Country:                 country,
+		State:                   state,
+		City:                    city,
+		Street:                  street,
+		PostalCode:              postalCode,
+		Organization:            organization,
+		OrgUnit:                 orgUnit,
+		OidEmail:                oidEmail,
+		EmailAddresses:          emailAddresses,
+		SubjectAlternativeHosts: subjectAlternativeHosts,
+		SignatureAlg:            common.SignatureAlgTox509[signatureAlg],
 	}
 
 	csr, privateKey, csrErr := cert.CreateCSR(request)
@@ -88,10 +89,10 @@ func includeCreateRequestFlags(cmd *cobra.Command) {
 		"Organization unit (example: IT)")
 	cmd.Flags().StringVar(&oidEmail, "oidEmail", "",
 		"Object Identifier (OID) Email Address")
-	cmd.Flags().StringVar(&serialNumber, "serialNumber", "",
-		"Serial Number")
 	emailAddresses = cmd.Flags().StringSlice("email", nil,
-		"Subject Alternative Email Addresses")
+		"Email Addresses")
+	subjectAlternativeHosts = cmd.Flags().StringSlice("subjectAlternativeHosts", nil,
+		"Subject Alternative Hosts")
 	cmd.Flags().StringVar(&targetPath, "targetPath", "./csr.pem",
 		"Target path for the CSR to be saved.")
 	cmd.Flags().Var(

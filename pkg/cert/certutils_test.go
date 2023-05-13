@@ -81,11 +81,11 @@ func TestCreateCertificateFromCSR(t *testing.T) {
 	validFrom, parseErr := time.Parse("2006-01-02 15:04:05", "2023-05-10 02:20:32")
 	assert.NoError(t, parseErr)
 
-	csrPath := "test/test"
+	csrPath := "test/test.csr"
 	csr, csrErr := DecodeCSR(csrPath)
 	assert.NoError(t, csrErr)
 
-	privateKeyPath := "test/test.key"
+	privateKeyPath := "test/test.csr.key"
 	privateKey, keyErr := ReadKey(privateKeyPath)
 	assert.NoError(t, keyErr)
 
@@ -94,9 +94,44 @@ func TestCreateCertificateFromCSR(t *testing.T) {
 	assert.NoError(t, err)
 	assert.NotNil(t, cert)
 	assert.Equal(t, "ervinszilagyi.dev", cert.Subject.CommonName)
-	assert.Equal(t, []string{"ACME"}, cert.Subject.Organization)
-	assert.Equal(t, []string{"IT"}, cert.Subject.OrganizationalUnit)
-	assert.Equal(t, []string{"RO"}, cert.Subject.Country)
-	assert.Equal(t, []string{"TG Mures"}, cert.Subject.Locality)
+	assert.ElementsMatch(t, []string{"ACME", "home"}, cert.Subject.Organization)
+	assert.ElementsMatch(t, []string{"IT", "HR"}, cert.Subject.OrganizationalUnit)
+	assert.ElementsMatch(t, []string{"RO"}, cert.Subject.Country)
+	assert.ElementsMatch(t, []string{"Mures"}, cert.Subject.Province)
+	assert.ElementsMatch(t, []string{"Tg Mures"}, cert.Subject.Locality)
+	assert.ElementsMatch(t, []string{"Gh. Doja"}, cert.Subject.StreetAddress)
+	assert.ElementsMatch(t, []string{"222111"}, cert.Subject.PostalCode)
+	assert.ElementsMatch(t, []string{"mail@ervinszilagyi.dev"}, cert.EmailAddresses)
+	assert.ElementsMatch(t, []string{"example.com", "alter.nativ"}, cert.DNSNames)
+	assert.Equal(t, x509.SHA256WithRSA, cert.SignatureAlgorithm)
+}
+
+func TestCreateCertificateFromCSRRequiredFieldsOnly(t *testing.T) {
+	days := time.Duration(10) * time.Hour * 24
+	validFrom, parseErr := time.Parse("2006-01-02 15:04:05", "2023-05-10 02:20:32")
+	assert.NoError(t, parseErr)
+
+	csrPath := "test/minimal.csr"
+	csr, csrErr := DecodeCSR(csrPath)
+	assert.NoError(t, csrErr)
+
+	privateKeyPath := "test/minimal.csr.key"
+	privateKey, keyErr := ReadKey(privateKeyPath)
+	assert.NoError(t, keyErr)
+
+	cert, err := CreateCertificateFromCSR(csr, validFrom, days, true, privateKey)
+
+	assert.NoError(t, err)
+	assert.NotNil(t, cert)
+	assert.Equal(t, "ervinszilagyi.dev", cert.Subject.CommonName)
+	assert.ElementsMatch(t, []string{}, csr.Subject.Organization)
+	assert.ElementsMatch(t, []string{}, csr.Subject.OrganizationalUnit)
+	assert.ElementsMatch(t, []string{}, csr.Subject.Country)
+	assert.ElementsMatch(t, []string{}, csr.Subject.Province)
+	assert.ElementsMatch(t, []string{}, csr.Subject.Locality)
+	assert.ElementsMatch(t, []string{}, csr.Subject.StreetAddress)
+	assert.ElementsMatch(t, []string{}, csr.Subject.PostalCode)
+	assert.ElementsMatch(t, []string{}, csr.EmailAddresses)
+	assert.ElementsMatch(t, []string{}, csr.DNSNames)
 	assert.Equal(t, x509.SHA256WithRSA, cert.SignatureAlgorithm)
 }

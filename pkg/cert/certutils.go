@@ -15,7 +15,6 @@ import (
 	"github.com/smallstep/certinfo"
 	"go.mozilla.org/pkcs7"
 	"io"
-	"math/big"
 	"net"
 	"net/http"
 	"net/url"
@@ -327,10 +326,9 @@ type CertificateInput struct {
 
 // CreateCertificate generates a self-signed X509 certificate
 func CreateCertificate(certInput CertificateInput) (*x509.Certificate, error) {
-	serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-	serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-	if err != nil {
-		return nil, err
+	serialNumber, serialNrErr := generateSerialNumber()
+	if serialNrErr != nil {
+		return nil, serialNrErr
 	}
 
 	subject := pkix.Name{
@@ -423,23 +421,16 @@ func CreateCertificateFromCSR(request *x509.CertificateRequest,
 	validFor time.Duration,
 	isCA bool,
 	privateKey any) (*x509.Certificate, error) {
-	var serialNr big.Int
-	serialNr.SetString(request.Subject.SerialNumber, 10)
+	serialNumber, serialNrErr := generateSerialNumber()
+	if serialNrErr != nil {
+		return nil, serialNrErr
+	}
 
 	notAfter := notBefore.Add(validFor)
 
 	subject := pkix.Name{
 		CommonName:   request.Subject.CommonName,
-		SerialNumber: request.Subject.SerialNumber,
-	}
-
-	if request.Subject.SerialNumber == "" {
-		serialNumberLimit := new(big.Int).Lsh(big.NewInt(1), 128)
-		serialNumber, err := rand.Int(rand.Reader, serialNumberLimit)
-		if err != nil {
-			return nil, err
-		}
-		subject.SerialNumber = serialNumber.String()
+		SerialNumber: serialNumber.String(),
 	}
 
 	subject.Country = append(subject.Country, request.Subject.Country...)
@@ -451,7 +442,7 @@ func CreateCertificateFromCSR(request *x509.CertificateRequest,
 	subject.OrganizationalUnit = append(subject.OrganizationalUnit, request.Subject.OrganizationalUnit...)
 
 	template := x509.Certificate{
-		SerialNumber: &serialNr,
+		SerialNumber: serialNumber,
 		Subject:      subject,
 		NotBefore:    notBefore,
 		NotAfter:     notAfter,

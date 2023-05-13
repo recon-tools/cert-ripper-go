@@ -17,21 +17,22 @@ var (
 		Run:   runGenerateFromStdio,
 	}
 
-	hostName       string
-	validFrom      string
-	validFor       int64
-	isCa           bool
-	country        *[]string
-	state          *[]string
-	city           *[]string
-	streetAddress  *[]string
-	postalCode     *[]string
-	organization   *[]string
-	orgUnit        *[]string
-	oidEmail       string
-	emailAddresses *[]string
-	signatureAlg   common.SignatureAlgorithm
-	targetPath     string
+	hostName                string
+	validFrom               string
+	validFor                int64
+	isCa                    bool
+	country                 *[]string
+	state                   *[]string
+	city                    *[]string
+	streetAddress           *[]string
+	postalCode              *[]string
+	organization            *[]string
+	orgUnit                 *[]string
+	oidEmail                string
+	emailAddresses          *[]string
+	subjectAlternativeHosts *[]string
+	signatureAlg            common.SignatureAlgorithm
+	targetPath              string
 )
 
 func runGenerateFromStdio(cmd *cobra.Command, args []string) {
@@ -59,20 +60,21 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 	}
 
 	certInput := cert.CertificateInput{
-		CommonName:     hostName,
-		NotBefore:      validFromDateTime,
-		ValidFor:       time.Duration(validFor) * time.Hour * 24,
-		IsCA:           isCa,
-		Country:        country,
-		State:          state,
-		City:           city,
-		Street:         streetAddress,
-		PostalCode:     postalCode,
-		Organization:   organization,
-		OrgUnit:        orgUnit,
-		OidEmail:       oidEmail,
-		EmailAddresses: emailAddresses,
-		PrivateKey:     privateKey,
+		CommonName:              hostName,
+		NotBefore:               validFromDateTime,
+		ValidFor:                time.Duration(validFor) * time.Hour * 24,
+		IsCA:                    isCa,
+		Country:                 country,
+		State:                   state,
+		City:                    city,
+		Street:                  streetAddress,
+		PostalCode:              postalCode,
+		Organization:            organization,
+		OrgUnit:                 orgUnit,
+		OidEmail:                oidEmail,
+		EmailAddresses:          emailAddresses,
+		SubjectAlternativeHosts: subjectAlternativeHosts,
+		PrivateKey:              privateKey,
 	}
 
 	certificate, certErr := cert.CreateCertificate(certInput)
@@ -117,7 +119,9 @@ func includeGenerateFromStdio(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&oidEmail, "oidEmail", "",
 		"Object Identifier (OID) Email Address")
 	emailAddresses = cmd.Flags().StringSlice("email", nil,
-		"Subject Alternative Email Addresses")
+		"Email Addresses")
+	subjectAlternativeHosts = cmd.Flags().StringSlice("subjectAlternativeHosts", nil,
+		"Subject Alternative Hosts")
 	cmd.Flags().Var(
 		enumflag.New(&signatureAlg, "signatureAlg", common.SignatureAlgIds, enumflag.EnumCaseInsensitive),
 		"signatureAlg", "Signature Algorithm (allowed values: SHA256WithRSA, SHA384WithRSA, SHA512WithRSA,"+
