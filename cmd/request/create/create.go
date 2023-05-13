@@ -5,6 +5,8 @@ import (
 	"cert-ripper-go/pkg/cert"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
+	"path"
+	"path/filepath"
 )
 
 var (
@@ -46,22 +48,36 @@ func runCreateRequest(cmd *cobra.Command, args []string) {
 		SignatureAlg:            common.SignatureAlgTox509[signatureAlg],
 	}
 
+	targetPath = filepath.FromSlash(targetPath)
+
+	var csrPath string
+	var keyPath string
+	extension := filepath.Ext(targetPath)
+	if extension == "" {
+		// We assume that a path without an extension is a directory. We append the certificate and the key name to it
+		csrPath = path.Join(targetPath, "csr.pem")
+		keyPath = path.Join(targetPath, "csr.pem.key")
+	} else {
+		pathWithoutExt := targetPath[0 : len(targetPath)-len(extension)]
+		csrPath = pathWithoutExt + ".pem"
+		keyPath = pathWithoutExt + ".pem.key"
+	}
+
 	csr, privateKey, csrErr := cert.CreateCSR(request)
 	if csrErr != nil {
 		cmd.PrintErrf("Failed create CSR. Error: %s", csrErr)
 		return
 	}
 
-	ioErr := cert.SaveCSR(csr, targetPath)
+	ioErr := cert.SaveCSR(csr, csrPath)
 	if ioErr != nil {
 		cmd.PrintErrf("Failed to save CSR to location %s. Error: %s", targetPath, ioErr)
 		return
 	}
 
-	privateKeyTargetPath := targetPath + ".key"
-	ioErr = cert.SavePrivateKey(privateKey, privateKeyTargetPath)
+	ioErr = cert.SavePrivateKey(privateKey, keyPath)
 	if ioErr != nil {
-		cmd.PrintErrf("Failed to save Private KEY for CSR to location %s. Error: %s", privateKeyTargetPath, ioErr)
+		cmd.PrintErrf("Failed to save Private KEY for CSR to location %s. Error: %s", keyPath, ioErr)
 		return
 	}
 }

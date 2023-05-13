@@ -13,7 +13,6 @@ import (
 	"github.com/smallstep/certinfo"
 	"net"
 	"os"
-	"path/filepath"
 )
 
 const (
@@ -110,10 +109,8 @@ func CreateCSR(request CertificateRequest) (*x509.CertificateRequest, any, error
 
 // SaveCSR saves the CSR in PEM format to a location
 func SaveCSR(csr *x509.CertificateRequest, targetPath string) error {
-	path := filepath.FromSlash(targetPath)
-
-	if _, ioErr := os.Stat(path); ioErr == nil {
-		return fmt.Errorf("file with location %s already exists", path)
+	if _, ioErr := os.Stat(targetPath); ioErr == nil {
+		return fmt.Errorf("file with location %s already exists", targetPath)
 	}
 
 	pemData := pem.EncodeToMemory(&pem.Block{
@@ -121,7 +118,7 @@ func SaveCSR(csr *x509.CertificateRequest, targetPath string) error {
 		Bytes: csr.Raw,
 	})
 
-	return os.WriteFile(path, pemData, 0644)
+	return os.WriteFile(targetPath, pemData, 0644)
 }
 
 // DecodeCSR reads a PEM .csr file, decodes it
@@ -153,9 +150,8 @@ func PrintCSR(csr *x509.CertificateRequest) error {
 
 // SavePrivateKey saves the private key (RSA, EC) in PEM format to a location
 func SavePrivateKey(privateKey any, targetPath string) error {
-	path := filepath.FromSlash(targetPath)
-	if _, ioErr := os.Stat(path); ioErr == nil {
-		return fmt.Errorf("file with location %s already exists", path)
+	if _, ioErr := os.Stat(targetPath); ioErr == nil {
+		return fmt.Errorf("file with location %s already exists", targetPath)
 	}
 
 	var pemData []byte
@@ -179,5 +175,5 @@ func SavePrivateKey(privateKey any, targetPath string) error {
 		Bytes: privateKeyDer,
 	})
 
-	return os.WriteFile(path, pemData, 0644)
+	return os.WriteFile(targetPath, pemData, 0644)
 }

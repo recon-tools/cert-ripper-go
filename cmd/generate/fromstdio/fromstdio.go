@@ -6,6 +6,8 @@ import (
 	hostutils "cert-ripper-go/pkg/host"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
+	"path"
+	"path/filepath"
 	"time"
 )
 
@@ -53,9 +55,30 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	targetPath = filepath.FromSlash(targetPath)
+
+	var certPath string
+	var keyPath string
+	extension := filepath.Ext(targetPath)
+	if extension == "" {
+		// We assume that a path without an extension is a directory. We append the certificate and the key name to it
+		certPath = path.Join(targetPath, "cert")
+		keyPath = path.Join(targetPath, "cert.pem.key")
+	} else {
+		pathWithoutExt := targetPath[0 : len(targetPath)-len(extension)]
+		certPath = pathWithoutExt + ".pem"
+		keyPath = pathWithoutExt + ".pem.key"
+	}
+
 	privateKey, keyErr := cert.GeneratePrivateKey(common.SignatureAlgTox509[signatureAlg])
 	if keyErr != nil {
 		cmd.PrintErrf("Failed to generate private key. Error: %s", keyErr)
+		return
+	}
+
+	keyIoError := cert.SavePrivateKey(privateKey, keyPath)
+	if keyIoError != nil {
+		cmd.PrintErrf("Failed to save private key. Error: %s", keyIoError)
 		return
 	}
 
@@ -83,7 +106,7 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if saveErr := cert.SaveCertificate(targetPath, certificate, "pem"); saveErr != nil {
+	if saveErr := cert.SaveCertificate(certPath, certificate, "pem"); saveErr != nil {
 		cmd.PrintErrf("Failed to save certificate. Error: %s", saveErr)
 		return
 	}

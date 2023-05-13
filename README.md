@@ -14,8 +14,10 @@ Usage:
 Available Commands:
   completion  Generate the autocompletion script for the specified shell
   export      Export the certificates from the chain and save them into a folder
+  generate    Generate a self-signed certificate
   help        Help about any command
   print       Print the certificates from the chain to the standard output
+  request     Create and decode CSRs (Certificate Signing Request)
   validate    Validate the certificate
 
 Flags:
