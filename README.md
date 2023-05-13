@@ -154,10 +154,97 @@ Example:
 cert-ripper request decode --path="certs/request.csr"
 ```
 
-### `generate` command
+### `generate` command - used to generate self-signed certificates
 
 ```bash
-cert-ripper generate fromstdio --host=example.com --validFrom="2023-05-09 15:04:05" --validFor=3600 --targetPath=certs --isCa
+cert-ripper generate
+Generate a self-signed certificate
+
+Usage:
+  cert-ripper generate [command]
+
+Available Commands:
+  fromcsr     Generate a self-signed certificate from a CSR request
+  fromstdio   Generate a self-signed certificate
+
+Flags:
+  -h, --help   help for generate
+```
+
+With `fromcsr` subcommand we can generate a self-signed certificate using an existing CSR.
+
+```bash
+Generate a self-signed certificate from a CSR request
+
+Usage:
+  cert-ripper generate fromcsr [flags]
+
+Flags:
+      --csrPath string          Path to the CSR in PEM format. (default ".")
+  -h, --help                    help for fromcsr
+      --privateKeyPath string   Path to the Private Key in PEM format (default ".")
+      --targetPath string       Path to save the generated certificate (default ".")
+      --validFor int            Duration in days until which the certificates will be valid (default 365)
+      --validFrom string        Creation UTC date formatted as yyyy-mm-dd HH:MM:SS, example: 2006-01-02 15:04:05 (default "now")
+```
+
+With `fromstdio` subcommand we can generate a self-signed certificate by explicitly passing the necessary arguments.
+
+```bash
+Generate a self-signed certificate
+
+Usage:
+  cert-ripper generate fromstdio [flags]
+
+Flags:
+      --city strings                                Locality/City (example: New-York). It can accept multiple values divided by comma.
+      --commonName string                           Hostname/Common name (example: domain.com).
+      --country strings                             Country code (example: US). It can accept multiple values divided by comma.
+      --email strings                               Email Addresses. It can accept multiple values divided by comma.
+  -h, --help                                        help for fromstdio
+      --isCa                                        Specify if the currently generated certificate should be its own Certificate Authority
+      --oidEmail string                             Object Identifier (OID) Email Address
+      --organization strings                        Organization (example: Acme). It can accept multiple values divided by comma.
+      --organizationUnit strings                    Organization unit (example: IT). It can accept multiple values divided by comma.
+      --postalCode strings                          Postal Code. It can accept multiple values divided by comma.
+      --signatureAlg signatureAlg[=SHA256WithRSA]   Signature Algorithm (allowed values: SHA256WithRSA (default if omitted), SHA384WithRSA, SHA512WithRSA, SHA256WithECDSA, SHA384WithECDSA, SHA512WithECDSA) (default SHA256WithRSA)
+      --state strings                               Province/State (example: California). It can accept multiple values divided by comma.
+      --street strings                              Street Address. It can accept multiple values divided by comma.
+      --subjectAlternativeHost strings              Subject Alternative Hosts. It can accept multiple values divided by comma.
+      --targetPath string                           Target path for the CSR to be saved. (default "./cert.pem")
+      --validFor int                                Duration in days until which the certificates will be valid (default 365)
+      --validFrom string                            Creation UTC date formatted as yyyy-mm-dd HH:MM:SS, example: 2006-01-02 15:04:05 (default "now")
+```
+
+Example:
+
+```bash
+cert-ripper generate fromstdio \
+--commonName=example.com \
+--validFrom="2023-05-09 15:04:05" \
+--validFor=3600 \
+--isCa
+```
+
+Example with all the possible fields:
+
+```bash
+cert-ripper generate fromstdio \
+--commonName=ervinszilagyi.dev \
+--country=RO \
+--email=mail@ervinszilagyi.dev \
+--oidEmail=mail@oid.com \
+--organization="home,ACME" \
+--organizationUnit="IT,HR" \
+--postalCode=222111 \
+--state=Mures \
+--city="Tg Mures" \
+--street="Gh. Doja" \
+--subjectAlternativeHost="alter.nativ,example.com" \
+--targetPath=test.cert \
+--validFrom="2023-05-09 15:04:05" \
+--validFor=3600 \
+--isCa
 ```
 
 ## Download and Install

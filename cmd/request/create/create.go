@@ -72,27 +72,27 @@ func init() {
 
 func includeCreateRequestFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&commonName, "commonName", "",
-		"Common name (example: domain.com).")
+		"Hostname/Common name (example: domain.com).")
 	country = cmd.Flags().StringSlice("country", nil,
-		"Country code (example: US).")
+		"Country code (example: US). It can accept multiple values divided by comma.")
 	state = cmd.Flags().StringSlice("state", nil,
-		"Province/State (example: California)")
+		"Province/State (example: California). It can accept multiple values divided by comma.")
 	city = cmd.Flags().StringSlice("city", nil,
-		"Locality/City (example: New-York)")
+		"Locality/City (example: New-York). It can accept multiple values divided by comma.")
 	street = cmd.Flags().StringSlice("street", nil,
-		"Street Address")
+		"Street Address. It can accept multiple values divided by comma.")
 	postalCode = cmd.Flags().StringSlice("postalCode", nil,
-		"Postal Code")
+		"Postal Code. It can accept multiple values divided by comma.")
 	organization = cmd.Flags().StringSlice("organization", nil,
-		"Organization (example: Acme)")
+		"Organization (example: Acme). It can accept multiple values divided by comma.")
 	orgUnit = cmd.Flags().StringSlice("organizationUnit", nil,
-		"Organization unit (example: IT)")
+		"Organization unit (example: IT). It can accept multiple values divided by comma.")
 	cmd.Flags().StringVar(&oidEmail, "oidEmail", "",
 		"Object Identifier (OID) Email Address")
 	emailAddresses = cmd.Flags().StringSlice("email", nil,
-		"Email Addresses")
+		"Email Addresses. It can accept multiple values divided by comma.")
 	subjectAlternativeHosts = cmd.Flags().StringSlice("subjectAlternativeHosts", nil,
-		"Subject Alternative Hosts")
+		"Subject Alternative Hosts. It can accept multiple values divided by comma.")
 	cmd.Flags().StringVar(&targetPath, "targetPath", "./csr.pem",
 		"Target path for the CSR to be saved.")
 	cmd.Flags().Var(
