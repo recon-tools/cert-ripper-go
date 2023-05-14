@@ -9,7 +9,7 @@ Currently, it offers the following features:
 - generate and decode certificate signing requests (CSR)
 - generate self-signed certificates
 
-Examples of usage:
+## Examples of Usage
 
 - Fetch certificate chain:
 
@@ -20,7 +20,7 @@ cert-ripper print --url=ervinszilagyi.dev
 - Generate a CSR:
 
 ```bash
-cert-ripper.exe request create --commonName ervinszilagyi.dev
+cert-ripper request create --commonName ervinszilagyi.dev
 ```
 
 - Decode a CSR:
@@ -32,7 +32,7 @@ cert-ripper request decode --path=csr.pem
 - Generate a self-signed certificate:
 
 ```bash
-cert-ripper.exe generate fromstdio --commonName=ervinszilagyi.dev --validFrom="2023-05-09 15:04:05" --validFor=3600 --isCa
+cert-ripper generate fromstdio --commonName=ervinszilagyi.dev --validFrom="2023-05-09 15:04:05" --validFor=3600 --isCa
 ```
 
 For more details about commands ands functionalities, please visit the [documentation](https://github.com/recon-tools/cert-ripper-go/wiki) page.
