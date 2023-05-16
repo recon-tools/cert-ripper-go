@@ -60,9 +60,16 @@ Download the executable from the releases page: https://github.com/recon-tools/c
 
 Go 1.19 is required.
 
+### Linux/MacOS
+
 ```bash
-cd cert-ripper-go
 go build -o target/cert-ripper
+```
+
+### Windows
+
+```bash
+go build -o target/cert-ripper.exe
 ```
 
 ### Build with ldflags

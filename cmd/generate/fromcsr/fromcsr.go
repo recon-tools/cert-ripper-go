@@ -19,6 +19,7 @@ var (
 	targetPath     string
 	validFrom      string
 	validFor       int64
+	isCa           bool
 )
 
 func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
@@ -36,18 +37,18 @@ func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
 
 	csr, csrErr := cert.DecodeCSR(csrPath)
 	if csrErr != nil {
-		cmd.PrintErrf("Failed to read and decode CSR from file %s. Error: %s", csrPath, csrErr)
+		cmd.PrintErrf("Failed to read and decode CSR from path \"%s\" Error: %s", csrPath, csrErr)
 		return
 	}
 
 	privateKey, keyErr := cert.ReadKey(privateKeyPath)
 	if keyErr != nil {
-		cmd.PrintErrf("Failed to read private key from file %s. Error: %s", privateKeyPath, keyErr)
+		cmd.PrintErrf("Failed to read private key from path \"%s\" Error: %s", privateKeyPath, keyErr)
 		return
 	}
 
 	certificate, certErr := cert.CreateCertificateFromCSR(csr, validFromDateTime,
-		time.Duration(validFor)*time.Hour*24, true, privateKey)
+		time.Duration(validFor)*time.Hour*24, isCa, privateKey)
 	if certErr != nil {
 		cmd.PrintErrf("Failed to create certificate from CSR. Error: %s", certErr)
 		return
@@ -64,9 +65,9 @@ func init() {
 }
 
 func includeGenerateFromCsrFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&csrPath, "csrPath", ".",
+	cmd.Flags().StringVar(&csrPath, "csrPath", "",
 		"Path to the CSR in PEM format.")
-	cmd.Flags().StringVar(&privateKeyPath, "privateKeyPath", ".",
+	cmd.Flags().StringVar(&privateKeyPath, "privateKeyPath", "",
 		"Path to the Private Key in PEM format")
 	cmd.Flags().StringVar(&targetPath, "targetPath", ".",
 		"Path to save the generated certificate")
@@ -74,4 +75,16 @@ func includeGenerateFromCsrFlags(cmd *cobra.Command) {
 		"Creation UTC date formatted as yyyy-mm-dd HH:MM:SS, example: 2006-01-02 15:04:05")
 	cmd.Flags().Int64Var(&validFor, "validFor", 365,
 		"Duration in days until which the certificates will be valid")
+	cmd.Flags().BoolVar(&isCa, "isCa", false,
+		"Specify if the currently generated certificate should be its own Certificate Authority")
+
+	if err := cmd.MarkFlagRequired("csrPath"); err != nil {
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
+		return
+	}
+
+	if err := cmd.MarkFlagRequired("privateKeyPath"); err != nil {
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
+		return
+	}
 }
