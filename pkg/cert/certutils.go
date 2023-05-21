@@ -102,6 +102,8 @@ func convertBytesTox509Certificate(certURI string, certBytes []byte) ([]*x509.Ce
 			}
 			return pkcsBlock.Certificates, nil
 		}
+	case ".cer":
+		fallthrough
 	case ".der":
 		fallthrough
 	case ".crt":
