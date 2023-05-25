@@ -1,24 +1,13 @@
 package export
 
 import (
+	"cert-ripper-go/cmd/common"
 	"cert-ripper-go/pkg/cert"
 	"cert-ripper-go/pkg/host"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
 	"net/url"
 	"path/filepath"
-)
-
-type CertFormat enumflag.Flag
-
-const (
-	PEM CertFormat = iota
-	CRT
-	CER
-	TXT
-	DER
-	P7B
-	P7C
 )
 
 var (
@@ -31,17 +20,7 @@ var (
 		Run:   runExport,
 	}
 
-	CertFormatIds = map[CertFormat][]string{
-		PEM: {"pem"},
-		CRT: {"crt"},
-		CER: {"cer"},
-		TXT: {"txt"},
-		DER: {"der"},
-		P7B: {"p7b"},
-		P7C: {"p7c"},
-	}
-
-	certFormat CertFormat
+	certFormat common.CertFormat
 	rawUrl     string
 )
 
@@ -68,7 +47,7 @@ func runExport(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if ioErr := cert.SaveCertificates(path, certs, CertFormatIds[certFormat][0]); ioErr != nil {
+	if ioErr := cert.SaveCertificates(path, certs, common.CertFormatIds[certFormat][0]); ioErr != nil {
 		cmd.PrintErrf("Failed to save a certificate from the chain. Error: %s", ioErr)
 		return
 	}
@@ -84,7 +63,7 @@ func includeExportFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&targetFolderPath, "path", "p", ".",
 		"Path to a writeable folder where the certificates will be saved.")
 	cmd.Flags().VarP(
-		enumflag.New(&certFormat, "certFormat", CertFormatIds, enumflag.EnumCaseInsensitive),
+		enumflag.New(&certFormat, "certFormat", common.CertFormatIds, enumflag.EnumCaseInsensitive),
 		"format", "f",
 		"Exported certificate format; can be 'pem' (default if omitted), 'crt', 'cer', 'der', 'p7b', 'p7c' or 'txt'")
 

@@ -16,6 +16,7 @@ import (
 )
 
 const (
+	certPEMBLockType      = "CERTIFICATE"
 	csrPEMBlockType       = "CERTIFICATE REQUEST"
 	rsaPrivateKeyType     = "RSA PRIVATE KEY"
 	ecPrivateKeyType      = "EC PRIVATE KEY"
