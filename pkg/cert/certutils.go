@@ -146,7 +146,8 @@ func SaveCertificates(folderPath string, chain []*x509.Certificate, certFormat s
 		}
 		path := filepath.Join(folderPath, strings.Join([]string{
 			prefix,
-			strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", ".")},
+			strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", "."),
+			certFormat},
 			"."))
 		if err := SaveCertificate(path, cert, certFormat); err != nil {
 			return fmt.Errorf("failed to save certificate, error: %w", err)
@@ -158,7 +159,6 @@ func SaveCertificates(folderPath string, chain []*x509.Certificate, certFormat s
 
 // SaveCertificate saves a certificate to the location specified by the `path` using a supported format
 func SaveCertificate(path string, cert *x509.Certificate, certFormat string) error {
-	path = strings.Join([]string{path, certFormat}, ".")
 	formatToAction := map[string]func(string, *x509.Certificate) error{
 		"pem": saveAsPem,
 		"crt": saveAsPem,
@@ -495,4 +495,43 @@ func getKeyUsage(privateKey any) x509.KeyUsage {
 		keyUsage |= x509.KeyUsageKeyEncipherment
 	}
 	return keyUsage
+}
+
+// DecodeCertificate reads a certificate file, decodes it
+func DecodeCertificate(path string) (*x509.Certificate, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+	extension := filepath.Ext(path)
+	switch filepath.Ext(path) {
+	case ".pem":
+		return decodePem(data)
+	case ".der":
+		return decodeDer(data)
+	case ".p7b":
+		fallthrough
+	case ".p7c":
+		return decodePkcs(data)
+	}
+	return nil, fmt.Errorf("invalid certificate format %s", extension)
+}
+
+func decodePem(data []byte) (*x509.Certificate, error) {
+	pemBlock, _ := pem.Decode(data)
+	if pemBlock == nil {
+		return nil, fmt.Errorf("cannot decode PEM certificate file")
+	}
+	if pemBlock.Type != certPEMBLockType || len(pemBlock.Headers) != 0 {
+		return nil, fmt.Errorf("unmatched type or headers for certificate")
+	}
+	return x509.ParseCertificate(pemBlock.Bytes)
+}
+
+func decodeDer(data []byte) (*x509.Certificate, error) {
+	return nil, fmt.Errorf("not implemented")
+}
+
+func decodePkcs(data []byte) (*x509.Certificate, error) {
+	return nil, fmt.Errorf("not implemented")
 }

@@ -5,7 +5,8 @@ import "github.com/thediveo/enumflag/v2"
 type CertFormat enumflag.Flag
 
 const (
-	PEM CertFormat = iota
+	DEFAULT CertFormat = iota
+	PEM
 	CRT
 	CER
 	TXT
@@ -15,11 +16,12 @@ const (
 )
 
 var CertFormatIds = map[CertFormat][]string{
-	PEM: {"pem"},
-	CRT: {"crt"},
-	CER: {"cer"},
-	TXT: {"txt"},
-	DER: {"der"},
-	P7B: {"p7b"},
-	P7C: {"p7c"},
+	DEFAULT: {"pem"},
+	PEM:     {"pem"},
+	CRT:     {"crt"},
+	CER:     {"cer"},
+	TXT:     {"txt"},
+	DER:     {"der"},
+	P7B:     {"p7b"},
+	P7C:     {"p7c"},
 }

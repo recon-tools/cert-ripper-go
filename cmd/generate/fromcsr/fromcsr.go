@@ -69,7 +69,7 @@ func includeGenerateFromCsrFlags(cmd *cobra.Command) {
 		"Path to the CSR in PEM format.")
 	cmd.Flags().StringVar(&privateKeyPath, "privateKeyPath", "",
 		"Path to the Private Key in PEM format")
-	cmd.Flags().StringVar(&targetPath, "targetPath", ".",
+	cmd.Flags().StringVar(&targetPath, "targetPath", "cert.pem",
 		"Path to save the generated certificate")
 	cmd.Flags().StringVar(&validFrom, "validFrom", "now",
 		"Creation UTC date formatted as yyyy-mm-dd HH:MM:SS, example: 2006-01-02 15:04:05")
