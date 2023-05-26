@@ -1,7 +1,7 @@
 package print
 
 import (
-	"cert-ripper-go/pkg/cert"
+	"cert-ripper-go/pkg/core"
 	"cert-ripper-go/pkg/host"
 	"github.com/spf13/cobra"
 	"net/url"
@@ -33,13 +33,13 @@ func runPrint(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	certs, fetchErr := cert.GetCertificateChain(u)
+	certs, fetchErr := core.GetCertificateChain(u)
 	if fetchErr != nil {
 		cmd.PrintErrf("Failed to fetch certificate chain. Error: %s", fetchErr)
 		return
 	}
 
-	if ioErr := cert.PrintCertificates(u.Host, certs); ioErr != nil {
+	if ioErr := core.PrintCertificates(u.Host, certs); ioErr != nil {
 		cmd.PrintErrf("Failed to print certificate to the standard output. Error: %s", ioErr)
 		return
 	}

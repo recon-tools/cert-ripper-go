@@ -2,7 +2,7 @@ package create
 
 import (
 	"cert-ripper-go/cmd/common"
-	"cert-ripper-go/pkg/cert"
+	"cert-ripper-go/pkg/core"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
 	"path"
@@ -33,7 +33,7 @@ var (
 )
 
 func runCreateRequest(cmd *cobra.Command, args []string) {
-	request := cert.CertificateRequest{
+	request := core.CertificateRequest{
 		CommonName:              commonName,
 		Country:                 country,
 		State:                   state,
@@ -63,19 +63,19 @@ func runCreateRequest(cmd *cobra.Command, args []string) {
 		keyPath = pathWithoutExt + ".pem.key"
 	}
 
-	csr, privateKey, csrErr := cert.CreateCSR(request)
+	csr, privateKey, csrErr := core.CreateCSR(request)
 	if csrErr != nil {
 		cmd.PrintErrf("Failed create CSR. Error: %s", csrErr)
 		return
 	}
 
-	ioErr := cert.SaveCSR(csr, csrPath)
+	ioErr := core.SaveCSR(csr, csrPath)
 	if ioErr != nil {
 		cmd.PrintErrf("Failed to save CSR to location %s. Error: %s", targetPath, ioErr)
 		return
 	}
 
-	ioErr = cert.SavePrivateKey(privateKey, keyPath)
+	ioErr = core.SavePrivateKey(privateKey, keyPath)
 	if ioErr != nil {
 		cmd.PrintErrf("Failed to save Private KEY for CSR to location %s. Error: %s", keyPath, ioErr)
 		return

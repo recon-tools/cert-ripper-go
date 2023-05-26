@@ -1,7 +1,7 @@
 package fromcsr
 
 import (
-	"cert-ripper-go/pkg/cert"
+	"cert-ripper-go/pkg/core"
 	"github.com/spf13/cobra"
 	"time"
 )
@@ -35,26 +35,26 @@ func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	csr, csrErr := cert.DecodeCSR(csrPath)
+	csr, csrErr := core.DecodeCSR(csrPath)
 	if csrErr != nil {
 		cmd.PrintErrf("Failed to read and decode CSR from path \"%s\" Error: %s", csrPath, csrErr)
 		return
 	}
 
-	privateKey, keyErr := cert.ReadKey(privateKeyPath)
+	privateKey, keyErr := core.ReadKey(privateKeyPath)
 	if keyErr != nil {
 		cmd.PrintErrf("Failed to read private key from path \"%s\" Error: %s", privateKeyPath, keyErr)
 		return
 	}
 
-	certificate, certErr := cert.CreateCertificateFromCSR(csr, validFromDateTime,
+	certificate, certErr := core.CreateCertificateFromCSR(csr, validFromDateTime,
 		time.Duration(validFor)*time.Hour*24, isCa, privateKey)
 	if certErr != nil {
 		cmd.PrintErrf("Failed to create certificate from CSR. Error: %s", certErr)
 		return
 	}
 
-	if ioErr := cert.SaveCertificate(targetPath, certificate, "pem"); ioErr != nil {
+	if ioErr := core.SaveCertificate(targetPath, certificate, "pem"); ioErr != nil {
 		cmd.PrintErrf("Failed to save certificate. Error: %s", ioErr)
 		return
 	}

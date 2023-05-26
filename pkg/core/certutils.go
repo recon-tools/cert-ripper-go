@@ -1,4 +1,4 @@
-package cert
+package core
 
 import (
 	"bytes"
@@ -83,7 +83,7 @@ func getRootCertificateIfPossible(chain []*x509.Certificate) ([]*x509.Certificat
 				return nil, fmt.Errorf("failed to retrieve certificate from remote location, error: %w", err)
 			}
 
-			return convertBytesTox509Certificate(certURI, certBytes)
+			return decodeBinaryCertificates(certURI, certBytes)
 		}
 	}
 
@@ -91,32 +91,28 @@ func getRootCertificateIfPossible(chain []*x509.Certificate) ([]*x509.Certificat
 }
 
 // Convert a slice of bytes to a x509 Certificate object.
-func convertBytesTox509Certificate(certURI string, certBytes []byte) ([]*x509.Certificate, error) {
+func decodeBinaryCertificates(certURI string, data []byte) ([]*x509.Certificate, error) {
 	certFormat := filepath.Ext(certURI)
-	switch certFormat {
-	case ".p7c":
-		{
-			pkcsBlock, err := pkcs7.Parse(certBytes)
-			if err != nil {
-				return nil, fmt.Errorf("failed to decode PKCS7 certificate from %s, error: %w", certURI, err)
-			}
-			return pkcsBlock.Certificates, nil
-		}
-	case ".cer":
-		fallthrough
-	case ".der":
-		fallthrough
-	case ".crt":
-		{
-			crt, err := x509.ParseCertificate(certBytes)
-			if err != nil {
-				return nil, fmt.Errorf("failed to decode DER certificate from %s, error: %s", certURI, err)
-			}
-			return []*x509.Certificate{crt}, nil
-		}
-	default:
+	if len(certFormat) > 0 {
+		certFormat = certFormat[1:]
+	} else {
+		return nil, fmt.Errorf("failed to deduct output format from path %s", certURI)
+	}
+
+	// Usually, each remote location is providing a binary certificate, most of them being in DER format
+	formatToAction := map[string]func(data []byte) ([]*x509.Certificate, error){
+		"crt": decodeDer,
+		"cer": decodeDer,
+		"der": decodeDer,
+		"p7c": decodePkcs,
+	}
+
+	action, ok := formatToAction[certFormat]
+	if !ok {
 		return nil, fmt.Errorf("unsupported certificate format %s", certFormat)
 	}
+
+	return action(data)
 }
 
 // PrintCertificates prints the certificates from the chain to stdout in human-readable format.
@@ -151,8 +147,8 @@ func SaveCertificates(folderPath string, chain []*x509.Certificate, certFormat s
 			strings.ReplaceAll(strings.TrimSpace(strings.ToLower(cert.Issuer.CommonName)), " ", "."),
 			certFormat},
 			"."))
-		if err := SaveCertificate(path, cert, certFormat); err != nil {
-			return fmt.Errorf("failed to save certificate, error: %w", err)
+		if ioErr := SaveCertificate(path, cert, certFormat); ioErr != nil {
+			return ioErr
 		}
 	}
 
@@ -180,12 +176,12 @@ func SaveCertificate(path string, cert *x509.Certificate, certFormat string) err
 // Save a certificate to the location specified by the `path` using PEM format
 func saveAsPem(path string, cert *x509.Certificate) error {
 	pemData := pem.EncodeToMemory(&pem.Block{
-		Type:  "CERTIFICATE",
+		Type:  certPEMBLockType,
 		Bytes: cert.Raw,
 	})
-	err := os.WriteFile(path, pemData, 0644)
-	if err != nil {
-		return fmt.Errorf("failed to save certificate to location %s, error: %w", path, err)
+	ioErr := os.WriteFile(path, pemData, 0644)
+	if ioErr != nil {
+		return ioErr
 	}
 
 	return nil
@@ -195,10 +191,10 @@ func saveAsPem(path string, cert *x509.Certificate) error {
 func saveAsTxt(path string, cert *x509.Certificate) error {
 	txtData, parseErr := certinfo.CertificateText(cert)
 	if parseErr != nil {
-		return fmt.Errorf("failed to convert certificate to TXT(OpenSSL) format, error: %w", parseErr)
+		return parseErr
 	}
 	if ioErr := os.WriteFile(path, []byte(txtData), 0644); ioErr != nil {
-		return fmt.Errorf("failed to save certificate to location %s, error: %w", path, ioErr)
+		return ioErr
 	}
 
 	return nil
@@ -207,7 +203,7 @@ func saveAsTxt(path string, cert *x509.Certificate) error {
 // Save a certificate to the location specified by the `path` using binary DER format
 func saveAsDer(path string, cert *x509.Certificate) error {
 	if ioErr := os.WriteFile(path, cert.Raw, 0644); ioErr != nil {
-		return fmt.Errorf("failed to save certificate to location %s, error: %w", path, ioErr)
+		return ioErr
 	}
 	return nil
 }
@@ -220,12 +216,12 @@ func saveAsPkcs(path string, cert *x509.Certificate) error {
 	}
 
 	pemData := pem.EncodeToMemory(&pem.Block{
-		Type:  "PKCS7",
+		Type:  pkcsPEMBlockType,
 		Bytes: certificateData,
 	})
 
 	if ioErr := os.WriteFile(path, pemData, 0644); ioErr != nil {
-		return fmt.Errorf("failed to save certificate to location %s, error: %w", path, ioErr)
+		return ioErr
 	}
 
 	return nil
@@ -499,27 +495,39 @@ func getKeyUsage(privateKey any) x509.KeyUsage {
 	return keyUsage
 }
 
-// DecodeCertificate reads a certificate file, decodes it
-func DecodeCertificate(path string) (*x509.Certificate, error) {
+// DecodeCertificate reads a certificate file, decodes it. The reason for returning a slice is that PKCS7 files
+// are allowed to contain multiple certificates
+func DecodeCertificate(path string) ([]*x509.Certificate, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}
-	extension := filepath.Ext(path)
-	switch filepath.Ext(path) {
-	case ".pem":
-		return decodePem(data)
-	case ".der":
-		return decodeDer(data)
-	case ".p7b":
-		fallthrough
-	case ".p7c":
-		return decodePkcs(data)
+
+	certFormat := filepath.Ext(path)
+
+	if len(certFormat) > 0 {
+		certFormat = certFormat[1:]
+	} else {
+		return nil, fmt.Errorf("failed to deduct output format from path %s", path)
 	}
-	return nil, fmt.Errorf("invalid certificate format %s", extension)
+
+	formatToAction := map[string]func(data []byte) ([]*x509.Certificate, error){
+		"pem": decodePem,
+		"crt": decodePem,
+		"cer": decodePem,
+		"der": decodeDer,
+		"p7b": decodePkcs,
+		"p7c": decodePkcs,
+	}
+	action, ok := formatToAction[certFormat]
+	if !ok {
+		return nil, fmt.Errorf("unsupported certificate format %s", certFormat)
+	}
+
+	return action(data)
 }
 
-func decodePem(data []byte) (*x509.Certificate, error) {
+func decodePem(data []byte) ([]*x509.Certificate, error) {
 	pemBlock, _ := pem.Decode(data)
 	if pemBlock == nil {
 		return nil, fmt.Errorf("cannot decode PEM certificate file")
@@ -527,13 +535,27 @@ func decodePem(data []byte) (*x509.Certificate, error) {
 	if pemBlock.Type != certPEMBLockType || len(pemBlock.Headers) != 0 {
 		return nil, fmt.Errorf("unmatched type or headers for certificate")
 	}
-	return x509.ParseCertificate(pemBlock.Bytes)
+
+	cert, parsErr := x509.ParseCertificate(pemBlock.Bytes)
+	if parsErr != nil {
+		return nil, parsErr
+	}
+
+	return []*x509.Certificate{cert}, nil
 }
 
-func decodeDer(data []byte) (*x509.Certificate, error) {
-	return nil, fmt.Errorf("not implemented")
+func decodeDer(data []byte) ([]*x509.Certificate, error) {
+	crt, parseErr := x509.ParseCertificate(data)
+	if parseErr != nil {
+		return nil, parseErr
+	}
+	return []*x509.Certificate{crt}, nil
 }
 
-func decodePkcs(data []byte) (*x509.Certificate, error) {
-	return nil, fmt.Errorf("not implemented")
+func decodePkcs(data []byte) ([]*x509.Certificate, error) {
+	pkcsBlock, parseErr := pkcs7.Parse(data)
+	if parseErr != nil {
+		return nil, parseErr
+	}
+	return pkcsBlock.Certificates, nil
 }

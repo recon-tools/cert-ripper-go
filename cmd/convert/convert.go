@@ -2,7 +2,7 @@ package convert
 
 import (
 	"cert-ripper-go/cmd/common"
-	"cert-ripper-go/pkg/cert"
+	"cert-ripper-go/pkg/core"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
 	"path/filepath"
@@ -22,12 +22,6 @@ var (
 )
 
 func runConvert(cmd *cobra.Command, args []string) {
-	cmd.Println("Certificate path: " + sourcePath)
-	certificate, decodeErr := cert.DecodeCertificate(sourcePath)
-	if decodeErr != nil {
-		cmd.PrintErrf("Failed to decode certificate. Error: %s", decodeErr)
-		return
-	}
 	formatStr := common.CertFormatIds[certFormat][0]
 	if certFormat == common.DEFAULT {
 		formatStr = filepath.Ext(targetPath)
@@ -36,7 +30,14 @@ func runConvert(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	ioErr := cert.SaveCertificate(targetPath, certificate, formatStr)
+	cmd.Println("Certificate path: " + sourcePath)
+	certificates, decodeErr := core.DecodeCertificate(sourcePath)
+	if decodeErr != nil {
+		cmd.PrintErrf("Failed to decode certificate. Error: %s", decodeErr)
+		return
+	}
+
+	ioErr := core.SaveCertificate(targetPath, certificates[0], formatStr)
 	if ioErr != nil {
 		cmd.PrintErrf("Failed to save certificate in %s format. Error: %s", certFormat, ioErr)
 		return

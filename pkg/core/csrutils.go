@@ -1,4 +1,4 @@
-package cert
+package core
 
 import (
 	"crypto/ecdsa"
@@ -13,14 +13,6 @@ import (
 	"github.com/smallstep/certinfo"
 	"net"
 	"os"
-)
-
-const (
-	certPEMBLockType      = "CERTIFICATE"
-	csrPEMBlockType       = "CERTIFICATE REQUEST"
-	rsaPrivateKeyType     = "RSA PRIVATE KEY"
-	ecPrivateKeyType      = "EC PRIVATE KEY"
-	ed25519PrivateKeyType = "PRIVATE KEY"
 )
 
 type CertificateRequest struct {
