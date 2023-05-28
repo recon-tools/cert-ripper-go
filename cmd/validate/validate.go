@@ -66,7 +66,7 @@ func init() {
 
 func includeValidateFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&rawUrl, "url", "u", "",
-		"URL or hostname for which we would want to grab the certificate chain.")
+		"[Required] URL or hostname for which we would want to grab the certificate chain.")
 
 	if err := cmd.MarkFlagRequired("url"); err != nil {
 		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)

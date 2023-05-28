@@ -553,7 +553,15 @@ func decodeDer(data []byte) ([]*x509.Certificate, error) {
 }
 
 func decodePkcs(data []byte) ([]*x509.Certificate, error) {
-	pkcsBlock, parseErr := pkcs7.Parse(data)
+	pemBlock, _ := pem.Decode(data)
+	if pemBlock == nil {
+		return nil, fmt.Errorf("cannot decode PEM certificate file")
+	}
+	if pemBlock.Type != pkcsPEMBlockType || len(pemBlock.Headers) != 0 {
+		return nil, fmt.Errorf("unmatched type or headers for certificate")
+	}
+
+	pkcsBlock, parseErr := pkcs7.Parse(pemBlock.Bytes)
 	if parseErr != nil {
 		return nil, parseErr
 	}

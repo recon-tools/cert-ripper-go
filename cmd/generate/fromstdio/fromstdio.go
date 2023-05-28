@@ -118,38 +118,54 @@ func init() {
 
 func includeGenerateFromStdio(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&commonName, "commonName", "",
-		"Hostname/Common name (example: domain.com).")
+		"[Required] Hostname/Common name (example: domain.com).")
 	cmd.Flags().StringVar(&validFrom, "validFrom", "now",
-		"Creation UTC date formatted as yyyy-mm-dd HH:MM:SS, example: 2006-01-02 15:04:05")
+		"[Optional] Creation UTC date formatted as yyyy-mm-dd HH:MM:SS, example: 2006-01-02 15:04:05 . "+
+			"Default: current time (now)")
 	cmd.Flags().Int64Var(&validFor, "validFor", 365,
-		"Duration in days until which the certificates will be valid")
+		"[Optional] Duration in days until which the certificates will be valid. "+
+			"Default: 365 days")
 	cmd.Flags().BoolVar(&isCa, "isCa", false,
-		"Specify if the currently generated certificate should be its own Certificate Authority")
+		"[Optional] Specify if the currently generated certificate should be its own Certificate Authority. "+
+			"Default: false if not specified")
 	country = cmd.Flags().StringSlice("country", nil,
-		"Country code (example: US). It can accept multiple values divided by comma.")
+		"[Optional] Country code (example: US). It can accept multiple values divided by comma. "+
+			"Default: none")
 	state = cmd.Flags().StringSlice("state", nil,
-		"Province/State (example: California). It can accept multiple values divided by comma.")
+		"[Optional] Province/State (example: California). It can accept multiple values divided by comma. "+
+			"Default: none")
 	city = cmd.Flags().StringSlice("city", nil,
-		"Locality/City (example: New-York). It can accept multiple values divided by comma.")
+		"[Optional] Locality/City (example: New-York). It can accept multiple values divided by comma. "+
+			"Default: none")
 	street = cmd.Flags().StringSlice("street", nil,
-		"Street Address. It can accept multiple values divided by comma.")
+		"[Optional] Street Address. It can accept multiple values divided by comma. "+
+			"Default: none")
 	postalCode = cmd.Flags().StringSlice("postalCode", nil,
-		"Postal Code. It can accept multiple values divided by comma.")
+		"[Optional] Postal Code. It can accept multiple values divided by comma. "+
+			"Default: none")
 	organization = cmd.Flags().StringSlice("organization", nil,
-		"Organization (example: Acme). It can accept multiple values divided by comma.")
+		"[Optional] Organization (example: Acme). It can accept multiple values divided by comma. "+
+			"Default: none")
 	orgUnit = cmd.Flags().StringSlice("organizationUnit", nil,
-		"Organization unit (example: IT). It can accept multiple values divided by comma.")
+		"[Optional] Organization unit (example: IT). It can accept multiple values divided by comma. "+
+			"Default: none")
 	cmd.Flags().StringVar(&oidEmail, "oidEmail", "",
-		"Object Identifier (OID) Email Address")
+		"[Optional] Object Identifier (OID) Email Address. Default: none")
 	emailAddresses = cmd.Flags().StringSlice("email", nil,
-		"Email Addresses. It can accept multiple values divided by comma.")
+		"[Optional] Email Addresses. It can accept multiple values divided by comma. Default: none")
 	subjectAlternativeHosts = cmd.Flags().StringSlice("subjectAlternativeHost", nil,
-		"Subject Alternative Hosts. It can accept multiple values divided by comma.")
+		"[Optional] Subject Alternative Hosts. It can accept multiple values divided by comma. "+
+			"Default: none")
 	cmd.Flags().Var(
 		enumflag.New(&signatureAlg, "signatureAlg", common.SignatureAlgIds, enumflag.EnumCaseInsensitive),
-		"signatureAlg", "Signature Algorithm (allowed values: SHA256WithRSA (default if omitted)"+
+		"signatureAlg", "[Optional] Signature Algorithm (allowed values: SHA256WithRSA (default if omitted)"+
 			", SHA384WithRSA, SHA512WithRSA, SHA256WithECDSA, SHA384WithECDSA, SHA512WithECDSA)")
 	cmd.Flags().Lookup("signatureAlg").NoOptDefVal = "SHA256WithRSA"
 	cmd.Flags().StringVar(&targetPath, "targetPath", "./cert.pem",
 		"Target path for the CSR to be saved.")
+
+	if err := cmd.MarkFlagRequired("commonName"); err != nil {
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
+		return
+	}
 }

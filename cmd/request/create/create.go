@@ -88,32 +88,43 @@ func init() {
 
 func includeCreateRequestFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&commonName, "commonName", "",
-		"Hostname/Common name (example: domain.com).")
+		"[Required] Hostname/Common name (example: domain.com).")
 	country = cmd.Flags().StringSlice("country", nil,
-		"Country code (example: US). It can accept multiple values divided by comma.")
+		"[Optional] Country code (example: US). It can accept multiple values divided by comma. "+
+			"Default: none")
 	state = cmd.Flags().StringSlice("state", nil,
-		"Province/State (example: California). It can accept multiple values divided by comma.")
+		"[Optional] Province/State (example: California). It can accept multiple values divided by comma. "+
+			"Default: none")
 	city = cmd.Flags().StringSlice("city", nil,
-		"Locality/City (example: New-York). It can accept multiple values divided by comma.")
+		"[Optional] Locality/City (example: New-York). It can accept multiple values divided by comma. "+
+			"Default: none")
 	street = cmd.Flags().StringSlice("street", nil,
-		"Street Address. It can accept multiple values divided by comma.")
+		"[Optional] Street Address. It can accept multiple values divided by comma. "+
+			"Default: none")
 	postalCode = cmd.Flags().StringSlice("postalCode", nil,
-		"Postal Code. It can accept multiple values divided by comma.")
+		"[Optional] Postal Code. It can accept multiple values divided by comma. "+
+			"Default: none")
 	organization = cmd.Flags().StringSlice("organization", nil,
-		"Organization (example: Acme). It can accept multiple values divided by comma.")
+		"[Optional] Organization (example: Acme). It can accept multiple values divided by comma. "+
+			"Default: none")
 	orgUnit = cmd.Flags().StringSlice("organizationUnit", nil,
-		"Organization unit (example: IT). It can accept multiple values divided by comma.")
+		"[Optional] Organization unit (example: IT). It can accept multiple values divided by comma. "+
+			"Default: none")
 	cmd.Flags().StringVar(&oidEmail, "oidEmail", "",
-		"Object Identifier (OID) Email Address")
+		"[Optional] Object Identifier (OID) Email Address. "+
+			"Default: none")
 	emailAddresses = cmd.Flags().StringSlice("email", nil,
-		"Email Addresses. It can accept multiple values divided by comma.")
+		"[Optional] Email Addresses. It can accept multiple values divided by comma. "+
+			"Default: none")
 	subjectAlternativeHosts = cmd.Flags().StringSlice("subjectAlternativeHosts", nil,
-		"Subject Alternative Hosts. It can accept multiple values divided by comma.")
-	cmd.Flags().StringVar(&targetPath, "targetPath", "./csr.pem",
-		"Target path for the CSR to be saved.")
+		"[Optional] Subject Alternative Hosts. It can accept multiple values divided by comma. "+
+			"Default: none")
+	cmd.Flags().StringVar(&targetPath, "targetPath", "csr.pem",
+		"[Optional] Target path for the CSR to be saved. "+
+			"Default: the certificate signature request will be saved in the current working directory with the name of csr.pem")
 	cmd.Flags().Var(
 		enumflag.New(&signatureAlg, "signatureAlg", common.SignatureAlgIds, enumflag.EnumCaseInsensitive),
-		"signatureAlg", "Signature Algorithm (allowed values: SHA256WithRSA (default if omitted)"+
+		"signatureAlg", "[Optional] Signature Algorithm (allowed values: SHA256WithRSA (default if omitted)"+
 			", SHA384WithRSA, SHA512WithRSA, SHA256WithECDSA, SHA384WithECDSA, SHA512WithECDSA)")
 	cmd.Flags().Lookup("signatureAlg").NoOptDefVal = "SHA256WithRSA"
 

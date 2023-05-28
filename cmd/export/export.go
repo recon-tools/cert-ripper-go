@@ -59,13 +59,13 @@ func init() {
 
 func includeExportFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&rawUrl, "url", "u", "",
-		"URL or hostname for which we would want to grab the certificate chain.")
+		"[Required] URL or hostname for which we would want to grab the certificate chain.")
 	cmd.Flags().StringVarP(&targetFolderPath, "path", "p", ".",
-		"Path to a writeable folder where the certificates will be saved.")
+		"[Optional] Path to a writeable folder where the certificates will be saved. Default: current working directory.")
 	cmd.Flags().VarP(
 		enumflag.New(&certFormat, "certFormat", common.CertFormatIds, enumflag.EnumCaseInsensitive),
 		"format", "f",
-		"Exported certificate format; can be 'pem' (default if omitted), 'crt', 'cer', 'der', 'p7b', 'p7c' or 'txt'")
+		"[Optional] Exported certificate format; can be 'pem' (default if omitted), 'crt', 'cer', 'der', 'p7b', 'p7c' or 'txt'")
 
 	if err := cmd.MarkFlagRequired("url"); err != nil {
 		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)

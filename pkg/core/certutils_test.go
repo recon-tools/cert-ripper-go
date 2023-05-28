@@ -135,3 +135,26 @@ func TestCreateCertificateFromCSRRequiredFieldsOnly(t *testing.T) {
 	assert.ElementsMatch(t, []string{}, csr.DNSNames)
 	assert.Equal(t, x509.SHA256WithRSA, cert.SignatureAlgorithm)
 }
+
+func TestDecodePEMCertificate(t *testing.T) {
+	pem, decodeErr := DecodeCertificate("test/cert.pem")
+	assert.NoError(t, decodeErr)
+
+	assert.Equal(t, 1, len(pem))
+
+	assert.Equal(t, "cert1.example.com", pem[0].Subject.CommonName)
+}
+
+func TestDecodePKCSCertificate(t *testing.T) {
+	pkcs, decodeErr := DecodeCertificate("test/pkcs.p7b")
+	assert.NoError(t, decodeErr)
+
+	assert.Equal(t, 2, len(pkcs))
+
+	commonNames := make([]string, 0)
+	for _, certificate := range pkcs {
+		commonNames = append(commonNames, certificate.Subject.CommonName)
+	}
+
+	assert.ElementsMatch(t, []string{"cert1.example.com", "cert2.example.com"}, commonNames)
+}

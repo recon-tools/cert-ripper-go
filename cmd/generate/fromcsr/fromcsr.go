@@ -66,17 +66,21 @@ func init() {
 
 func includeGenerateFromCsrFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVar(&csrPath, "csrPath", "",
-		"Path to the CSR in PEM format.")
+		"[Required] Path to the CSR in PEM format.")
 	cmd.Flags().StringVar(&privateKeyPath, "privateKeyPath", "",
-		"Path to the Private Key in PEM format")
+		"[Required] Path to the Private Key in PEM format")
 	cmd.Flags().StringVar(&targetPath, "targetPath", "cert.pem",
-		"Path to save the generated certificate")
+		"[Optional] Path to save the generated certificate. "+
+			"Default: the certificate will be saved in the current working directory with the name of cert.pem")
 	cmd.Flags().StringVar(&validFrom, "validFrom", "now",
-		"Creation UTC date formatted as yyyy-mm-dd HH:MM:SS, example: 2006-01-02 15:04:05")
+		"[Optional] Creation UTC date formatted as yyyy-mm-dd HH:MM:SS, example: 2006-01-02 15:04:05 "+
+			"Default: current time (now)")
 	cmd.Flags().Int64Var(&validFor, "validFor", 365,
-		"Duration in days until which the certificates will be valid")
+		"[Optional] Duration in days in days until which the certificates will be valid."+
+			"Default: 365 days")
 	cmd.Flags().BoolVar(&isCa, "isCa", false,
-		"Specify if the currently generated certificate should be its own Certificate Authority")
+		"[Optional] Specify if the currently generated certificate should be its own Certificate Authority."+
+			"Default: false if not specified")
 
 	if err := cmd.MarkFlagRequired("csrPath"); err != nil {
 		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
