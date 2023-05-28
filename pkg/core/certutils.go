@@ -130,8 +130,8 @@ func PrintCertificates(host string, chain []*x509.Certificate) error {
 	return nil
 }
 
-// SaveCertificates saves the certificates from the chain into a folder
-func SaveCertificates(folderPath string, chain []*x509.Certificate, certFormat string) error {
+// SaveCertificateChain saves the certificates from the chain into a folder
+func SaveCertificateChain(folderPath string, chain []*x509.Certificate, certFormat string) error {
 	for i, cert := range chain {
 		var prefix string
 		switch i {

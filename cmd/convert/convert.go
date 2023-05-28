@@ -3,6 +3,7 @@ package convert
 import (
 	"cert-ripper-go/cmd/common"
 	"cert-ripper-go/pkg/core"
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
 	"path/filepath"
@@ -27,6 +28,8 @@ func runConvert(cmd *cobra.Command, args []string) {
 		formatStr = filepath.Ext(targetPath)
 		if len(formatStr) > 0 {
 			formatStr = formatStr[1:]
+		} else {
+			formatStr = common.CertFormatIds[common.PEM][0]
 		}
 	}
 
@@ -36,10 +39,26 @@ func runConvert(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	ioErr := core.SaveCertificate(targetPath, certificates[0], formatStr)
-	if ioErr != nil {
-		cmd.PrintErrf("Failed to save certificate in %s format. Error: %s", certFormat, ioErr)
-		return
+	switch len(certificates) {
+	case 0:
+		cmd.PrintErr("No certificate to save!")
+	case 1:
+		ioErr := core.SaveCertificate(targetPath, certificates[0], formatStr)
+		if ioErr != nil {
+			cmd.PrintErrf("Failed to save certificate in %s format. Error: %s", certFormat, ioErr)
+			return
+		}
+	default:
+		extension := filepath.Ext(targetPath)
+		withoutExt := targetPath[0 : len(targetPath)-len(extension)]
+		for i, certificate := range certificates {
+			currentTargetPath := fmt.Sprintf("%s-%d%s", withoutExt, i+1, extension)
+			ioErr := core.SaveCertificate(currentTargetPath, certificate, formatStr)
+			if ioErr != nil {
+				cmd.PrintErrf("Failed to save certificate in %s. Error: %s", currentTargetPath, ioErr)
+				return
+			}
+		}
 	}
 }
 

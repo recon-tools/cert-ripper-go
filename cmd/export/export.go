@@ -47,7 +47,12 @@ func runExport(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if ioErr := core.SaveCertificates(path, certs, common.CertFormatIds[certFormat][0]); ioErr != nil {
+	formatStr := common.CertFormatIds[certFormat][0]
+	if certFormat == common.DEFAULT {
+		formatStr = common.CertFormatIds[common.PEM][0]
+	}
+
+	if ioErr := core.SaveCertificateChain(path, certs, formatStr); ioErr != nil {
 		cmd.PrintErrf("Failed to save a certificate from the chain. Error: %s", ioErr)
 		return
 	}

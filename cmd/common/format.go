@@ -16,7 +16,7 @@ const (
 )
 
 var CertFormatIds = map[CertFormat][]string{
-	DEFAULT: {"pem"},
+	DEFAULT: {},
 	PEM:     {"pem"},
 	CRT:     {"crt"},
 	CER:     {"cer"},
