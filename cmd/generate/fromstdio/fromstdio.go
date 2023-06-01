@@ -117,7 +117,7 @@ func init() {
 }
 
 func includeGenerateFromStdio(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&commonName, "commonName", "",
+	cmd.Flags().StringVarP(&commonName, "commonName", "c", "",
 		"[Required] Hostname/Common name (example: domain.com).")
 	cmd.Flags().StringVar(&validFrom, "validFrom", "now",
 		"[Optional] Creation UTC date formatted as yyyy-mm-dd HH:MM:SS, example: 2006-01-02 15:04:05 . "+

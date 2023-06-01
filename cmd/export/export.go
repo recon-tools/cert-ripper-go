@@ -11,11 +11,11 @@ import (
 )
 
 var (
-	targetFolderPath string
+	targetPath string
 
 	Cmd = &cobra.Command{
 		Use:   "export",
-		Short: "Export the certificates from the chain and save them into a folder",
+		Short: "Fetch the certificate chain from a remote location and save them in a local directory",
 		Long:  ``,
 		Run:   runExport,
 	}
@@ -39,7 +39,7 @@ func runExport(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	path := filepath.FromSlash(targetFolderPath)
+	path := filepath.FromSlash(targetPath)
 
 	certs, fetchErr := core.GetCertificateChain(u)
 	if fetchErr != nil {
@@ -65,8 +65,8 @@ func init() {
 func includeExportFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&rawUrl, "url", "u", "",
 		"[Required] URL or hostname for which we would want to grab the certificate chain.")
-	cmd.Flags().StringVarP(&targetFolderPath, "path", "p", ".",
-		"[Optional] Path to a writeable folder where the certificates will be saved. Default: current working directory.")
+	cmd.Flags().StringVarP(&targetPath, "targetPath", "t", ".",
+		"[Optional] Path to a writeable directory where the certificates will be saved. Default: current working directory.")
 	cmd.Flags().VarP(
 		enumflag.New(&certFormat, "certFormat", common.CertFormatIds, enumflag.EnumCaseInsensitive),
 		"format", "f",

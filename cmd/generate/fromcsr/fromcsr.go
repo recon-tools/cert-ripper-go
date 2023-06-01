@@ -65,11 +65,11 @@ func init() {
 }
 
 func includeGenerateFromCsrFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&csrPath, "csrPath", "",
+	cmd.Flags().StringVarP(&csrPath, "csrPath", "s", "",
 		"[Required] Path to the CSR in PEM format.")
-	cmd.Flags().StringVar(&privateKeyPath, "privateKeyPath", "",
+	cmd.Flags().StringVarP(&privateKeyPath, "privateKeyPath", "k", "",
 		"[Required] Path to the Private Key in PEM format")
-	cmd.Flags().StringVar(&targetPath, "targetPath", "cert.pem",
+	cmd.Flags().StringVarP(&targetPath, "targetPath", "t", "cert.pem",
 		"[Optional] Path to save the generated certificate. "+
 			"Default: the certificate will be saved in the current working directory with the name of cert.pem")
 	cmd.Flags().StringVar(&validFrom, "validFrom", "now",

@@ -87,7 +87,7 @@ func init() {
 }
 
 func includeCreateRequestFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVar(&commonName, "commonName", "",
+	cmd.Flags().StringVarP(&commonName, "commonName", "c", "",
 		"[Required] Hostname/Common name (example: domain.com).")
 	country = cmd.Flags().StringSlice("country", nil,
 		"[Optional] Country code (example: US). It can accept multiple values divided by comma. "+
@@ -119,7 +119,7 @@ func includeCreateRequestFlags(cmd *cobra.Command) {
 	subjectAlternativeHosts = cmd.Flags().StringSlice("subjectAlternativeHosts", nil,
 		"[Optional] Subject Alternative Hosts. It can accept multiple values divided by comma. "+
 			"Default: none")
-	cmd.Flags().StringVar(&targetPath, "targetPath", "csr.pem",
+	cmd.Flags().StringVarP(&targetPath, "targetPath", "t", "csr.pem",
 		"[Optional] Target path for the CSR to be saved. "+
 			"Default: the certificate signature request will be saved in the current working directory with the name of csr.pem")
 	cmd.Flags().Var(

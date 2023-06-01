@@ -10,7 +10,7 @@ import (
 var (
 	Cmd = &cobra.Command{
 		Use:   "print",
-		Short: "Print the certificates from the chain to the standard output",
+		Short: "Fetch the certificate chain from a remote location and print them to the standard output",
 		Long:  ``,
 		Run:   runPrint,
 	}

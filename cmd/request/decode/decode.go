@@ -35,10 +35,10 @@ func init() {
 }
 
 func includeDecodeRequestFlags(cmd *cobra.Command) {
-	cmd.Flags().StringVarP(&csrPath, "path", "p", "",
+	cmd.Flags().StringVarP(&csrPath, "sourcePath", "s", "",
 		"[Required] Path for of the CSR file.")
 
-	if err := cmd.MarkFlagRequired("path"); err != nil {
+	if err := cmd.MarkFlagRequired("sourcePath"); err != nil {
 		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}

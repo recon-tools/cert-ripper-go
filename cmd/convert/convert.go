@@ -13,8 +13,10 @@ var (
 	Cmd = &cobra.Command{
 		Use:   "convert",
 		Short: "Convert a certificate from one format to another",
-		Long:  ``,
-		Run:   runConvert,
+		Long: `Convert a certificate from one format to another. Supported formats for the input certificate are: PEM,
+CER, CRT, DER, P7B, P7C. In case of a PKCS7 (P7B, P7C) if the bundle contains multiple certificates, each certificate
+will be saved converted and independently in the specified output format.`,
+		Run: runConvert,
 	}
 
 	sourcePath string
