@@ -26,7 +26,7 @@ var (
 	gitCommit  = "commit"
 	rootCmd    = &cobra.Command{
 		Use:              "cert-ripper",
-		Short:            "Retrieve the certificate chain for a URL or a hostname.",
+		Short:            "The simplified x509 certificate tool.",
 		Long:             ``,
 		Version:          fmt.Sprintf("%s (%s)", appVersion, gitCommit),
 		TraverseChildren: true,

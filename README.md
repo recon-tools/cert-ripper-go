@@ -35,6 +35,12 @@ cert-ripper request decode --path=csr.pem
 cert-ripper generate fromstdio --commonName=ervinszilagyi.dev --validFrom="2023-05-09 15:04:05" --validFor=3600 --isCa
 ```
 
+- Convert a certificate from .p7b format to .pem:
+
+```bash
+cert-ripper convert -s certs/pkcs.p7b -t certs/crt.pem
+```
+
 For more details about commands ands functionalities, please visit the [documentation](https://github.com/recon-tools/cert-ripper-go/wiki) page.
 
 ## Download and Install
