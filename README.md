@@ -51,7 +51,7 @@ Install with homebrew:
 
 ```bash
 brew tap recon-tools/homebrew-recon-tools
-brew install cert-ripper-go
+brew install cert-ripper
 ```
 
 ### Debian/Ubuntu
