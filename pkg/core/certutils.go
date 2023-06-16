@@ -104,7 +104,7 @@ func decodeBinaryCertificates(certURI string, data []byte) ([]*x509.Certificate,
 		"crt": decodeDer,
 		"cer": decodeDer,
 		"der": decodeDer,
-		"p7c": decodePkcs,
+		"p7c": decodePkcsBinary,
 	}
 
 	action, ok := formatToAction[certFormat]
@@ -564,6 +564,14 @@ func decodePkcs(data []byte) ([]*x509.Certificate, error) {
 	pkcsBlock, parseErr := pkcs7.Parse(pemBlock.Bytes)
 	if parseErr != nil {
 		return nil, parseErr
+	}
+	return pkcsBlock.Certificates, nil
+}
+
+func decodePkcsBinary(data []byte) ([]*x509.Certificate, error) {
+	pkcsBlock, err := pkcs7.Parse(data)
+	if err != nil {
+		return nil, err
 	}
 	return pkcsBlock.Certificates, nil
 }
