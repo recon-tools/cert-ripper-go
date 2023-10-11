@@ -47,9 +47,11 @@ func runExport(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	formatStr := common.CertFormatIds[certFormat][0]
+	var formatStr string
 	if certFormat == common.DEFAULT {
 		formatStr = common.CertFormatIds[common.PEM][0]
+	} else {
+		formatStr = common.CertFormatIds[certFormat][0]
 	}
 
 	if ioErr := core.SaveCertificateChain(path, certs, formatStr); ioErr != nil {
