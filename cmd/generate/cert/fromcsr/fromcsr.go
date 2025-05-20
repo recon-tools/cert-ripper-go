@@ -16,6 +16,7 @@ var (
 
 	csrPath        string
 	privateKeyPath string
+	caPath         string
 	targetPath     string
 	validFrom      string
 	validFor       int64
@@ -41,6 +42,12 @@ func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
 		return
 	}
 
+	ca, caErr := core.DecodeCertificate(caPath)
+	if caErr != nil {
+		cmd.PrintErrf("Failed to read and decode CA from path \"%s\" Error: %s", caPath, caErr)
+		return
+	}
+
 	privateKey, keyErr := core.ReadKey(privateKeyPath)
 	if keyErr != nil {
 		cmd.PrintErrf("Failed to read private key from path \"%s\" Error: %s", privateKeyPath, keyErr)
@@ -48,7 +55,7 @@ func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
 	}
 
 	certificate, certErr := core.CreateCertificateFromCSR(csr, validFromDateTime,
-		time.Duration(validFor)*time.Hour*24, isCa, privateKey)
+		time.Duration(validFor)*time.Hour*24, ca[0], privateKey)
 	if certErr != nil {
 		cmd.PrintErrf("Failed to create certificate from CSR. Error: %s", certErr)
 		return
@@ -67,6 +74,8 @@ func init() {
 func includeGenerateFromCsrFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&csrPath, "csrPath", "s", "",
 		"[Required] Path to the CSR in PEM format.")
+	cmd.Flags().StringVarP(&caPath, "caPath", "c", "",
+		"[Required] Path to CA certificate")
 	cmd.Flags().StringVarP(&privateKeyPath, "privateKeyPath", "k", "",
 		"[Required] Path to the Private Key in PEM format")
 	cmd.Flags().StringVarP(&targetPath, "targetPath", "t", "cert.pem",
@@ -83,6 +92,11 @@ func includeGenerateFromCsrFlags(cmd *cobra.Command) {
 			"Default: false if not specified")
 
 	if err := cmd.MarkFlagRequired("csrPath"); err != nil {
+		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
+		return
+	}
+
+	if err := cmd.MarkFlagRequired("caPath"); err != nil {
 		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
