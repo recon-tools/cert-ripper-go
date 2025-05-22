@@ -4,6 +4,9 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"crypto/x509/pkix"
+	"fmt"
+	"os"
+	"path/filepath"
 	"time"
 )
 
@@ -79,4 +82,46 @@ func CreateCertificateAuthority(caInput CaInput) (*x509.Certificate, error) {
 	}
 
 	return x509.ParseCertificate(derBytes)
+}
+
+// DecodeCACertificate reads a certificate file, decodes it. The reason for returning a slice is that PKCS7 files
+// are allowed to contain multiple certificates
+func DecodeCACertificate(path string) (*x509.Certificate, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	certFormat := filepath.Ext(path)
+
+	if len(certFormat) > 0 {
+		certFormat = certFormat[1:]
+	} else {
+		return nil, fmt.Errorf("failed to deduct output format from path %s", path)
+	}
+
+	formatToAction := map[string]func(data []byte) ([]*x509.Certificate, error){
+		"pem": decodePem,
+		"crt": decodePem,
+		"cer": decodePem,
+		"der": decodeDer,
+		"p7b": decodePkcs,
+		"p7c": decodePkcs,
+	}
+	action, ok := formatToAction[certFormat]
+	if !ok {
+		return nil, fmt.Errorf("unsupported certificate format %s", certFormat)
+	}
+
+	ca, decodeErr := action(data)
+	if decodeErr != nil {
+		return nil, decodeErr
+	}
+
+	// We assume that the CA file has only 1 certificate
+	if len(ca) >= 1 {
+		return ca[0], nil
+	}
+
+	return nil, fmt.Errorf("ca certifcate could not be decoded, no valid certificate found in the file %s", path)
 }

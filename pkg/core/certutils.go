@@ -315,10 +315,12 @@ type CertificateInput struct {
 	OrgUnit        *[]string
 	EmailAddresses *[]string
 	OidEmail       string
+	IPAddresses    *[]net.IP
 
 	SubjectAlternativeHosts *[]string
 
-	PrivateKey any
+	CAPrivateKey any
+	PrivateKey   any
 }
 
 // CreateCertificate generates a self-signed X509 certificate
@@ -399,7 +401,7 @@ func CreateCertificate(certInput CertificateInput) (*x509.Certificate, error) {
 	}
 
 	derBytes, err := x509.CreateCertificate(rand.Reader,
-		&template, certInput.CA, getPublicKey(certInput.PrivateKey), certInput.PrivateKey)
+		&template, certInput.CA, getPublicKey(certInput.PrivateKey), certInput.CAPrivateKey)
 	if err != nil {
 		return nil, err
 	}
