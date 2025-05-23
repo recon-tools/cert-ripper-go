@@ -414,6 +414,7 @@ func CreateCertificateFromCSR(request *x509.CertificateRequest,
 	notBefore time.Time,
 	validFor time.Duration,
 	ca *x509.Certificate,
+	caPrivateKey any,
 	privateKey any) (*x509.Certificate, error) {
 	serialNumber, serialNrErr := generateSerialNumber()
 	if serialNrErr != nil {
@@ -450,7 +451,7 @@ func CreateCertificateFromCSR(request *x509.CertificateRequest,
 	template.DNSNames = append(template.DNSNames, request.DNSNames...)
 	template.EmailAddresses = append(template.EmailAddresses, request.EmailAddresses...)
 
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, ca, getPublicKey(privateKey), privateKey)
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, ca, getPublicKey(privateKey), caPrivateKey)
 	if err != nil {
 		return nil, err
 	}

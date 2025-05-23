@@ -18,7 +18,6 @@ func TestCreateCertificateRequiredFields(t *testing.T) {
 		CommonName: "example.com",
 		NotBefore:  validFrom,
 		ValidFor:   time.Duration(10) * time.Hour * 24,
-		IsCA:       true,
 		PrivateKey: privateKey,
 	}
 
@@ -43,7 +42,6 @@ func TestCreateCertificateAllFields(t *testing.T) {
 		CommonName:              "example.com",
 		NotBefore:               validFrom,
 		ValidFor:                time.Duration(10) * time.Hour * 24,
-		IsCA:                    true,
 		PrivateKey:              privateKey,
 		Country:                 &[]string{"RO"},
 		State:                   &[]string{"Mures"},
@@ -89,7 +87,9 @@ func TestCreateCertificateFromCSR(t *testing.T) {
 	privateKey, keyErr := ReadKey(privateKeyPath)
 	assert.NoError(t, keyErr)
 
-	cert, err := CreateCertificateFromCSR(csr, validFrom, days, true, privateKey)
+	ca := &x509.Certificate{}
+
+	cert, err := CreateCertificateFromCSR(csr, validFrom, days, ca, privateKey, privateKey)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, cert)
@@ -119,7 +119,9 @@ func TestCreateCertificateFromCSRRequiredFieldsOnly(t *testing.T) {
 	privateKey, keyErr := ReadKey(privateKeyPath)
 	assert.NoError(t, keyErr)
 
-	cert, err := CreateCertificateFromCSR(csr, validFrom, days, true, privateKey)
+	ca := &x509.Certificate{}
+
+	cert, err := CreateCertificateFromCSR(csr, validFrom, days, ca, privateKey, privateKeyPath)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, cert)

@@ -55,7 +55,7 @@ func GeneratePrivateKey(signatureAlg x509.SignatureAlgorithm) (keys any, err err
 			return nil, err
 		}
 	default:
-		panic("Invalid signature algorithm")
+		keys, err = rsa.GenerateKey(rand.Reader, 2048)
 	}
 	return keys, nil
 }

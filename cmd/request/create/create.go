@@ -5,7 +5,6 @@ import (
 	"cert-ripper-go/pkg/core"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
-	"path"
 	"path/filepath"
 )
 
@@ -55,8 +54,8 @@ func runCreateRequest(cmd *cobra.Command, args []string) {
 	extension := filepath.Ext(targetPath)
 	if extension == "" {
 		// We assume that a path without an extension is a directory. We append the certificate and the key name to it
-		csrPath = path.Join(targetPath, "csr.pem")
-		keyPath = path.Join(targetPath, "csr.pem.key")
+		csrPath = filepath.Join(targetPath, "csr.pem")
+		keyPath = filepath.Join(targetPath, "csr.pem.key")
 	} else {
 		pathWithoutExt := targetPath[0 : len(targetPath)-len(extension)]
 		csrPath = pathWithoutExt + ".pem"

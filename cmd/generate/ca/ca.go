@@ -2,10 +2,10 @@ package ca
 
 import (
 	"cert-ripper-go/cmd/common"
+	"cert-ripper-go/cmd/generate/shared"
 	"cert-ripper-go/pkg/core"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
-	"path"
 	"path/filepath"
 	"time"
 )
@@ -30,6 +30,7 @@ var (
 	emailAddresses *[]string
 	signatureAlg   common.SignatureAlgorithm
 	targetPath     string
+	certNamePrefix string
 )
 
 func generateCACertificate(cmd *cobra.Command, args []string) {
@@ -48,18 +49,9 @@ func generateCACertificate(cmd *cobra.Command, args []string) {
 
 	targetPath = filepath.FromSlash(targetPath)
 
-	var certPath string
-	var keyPath string
-	extension := filepath.Ext(targetPath)
-	if extension == "" {
-		// We assume that a path without an extension is a directory. We append the certificate and the key name to it
-		certPath = path.Join(targetPath, "ca")
-		keyPath = path.Join(targetPath, "ca.pem.key")
-	} else {
-		pathWithoutExt := targetPath[0 : len(targetPath)-len(extension)]
-		certPath = pathWithoutExt + ".pem"
-		keyPath = pathWithoutExt + ".pem.key"
-	}
+	certNamePrefix := "ca"
+	certPath := shared.ComputeCertificatePath(targetPath, certNamePrefix)
+	keyPath := shared.ComputeKeyPath(targetPath, certNamePrefix)
 
 	privateKey, keyErr := core.GeneratePrivateKey(common.SignatureAlgTox509[signatureAlg])
 	if keyErr != nil {
@@ -140,4 +132,9 @@ func includeGenerateCAFromStdio(cmd *cobra.Command) {
 	cmd.Flags().Lookup("signatureAlg").NoOptDefVal = "SHA256WithRSA"
 	cmd.Flags().StringVar(&targetPath, "targetPath", "./ca.pem",
 		"Target path for the CSR to be saved.")
+	cmd.Flags().StringVar(&certNamePrefix, "certNamePrefix", "cert",
+		"[Optional] Prefix for the name of the certificate. The certificate will be saved in the folder "+
+			"provided with --targetPath. The name of the certificate will be <certNamePrefix>.pem (or other extension "+
+			"requested). Additionally, this prefix will be used in the name of the private key and/or the name of the "+
+			"ca certificate.")
 }

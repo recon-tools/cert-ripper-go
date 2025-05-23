@@ -2,10 +2,11 @@ package fromstdio
 
 import (
 	"cert-ripper-go/cmd/common"
-	"cert-ripper-go/cmd/generate/cert/shared"
+	"cert-ripper-go/cmd/generate/shared"
 	"cert-ripper-go/pkg/core"
 	hostutils "cert-ripper-go/pkg/host"
 	"crypto/x509"
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
 	"net"
@@ -15,10 +16,11 @@ import (
 
 var (
 	Cmd = &cobra.Command{
-		Use:   "fromstdio",
-		Short: "Generate a self-signed certificate",
-		Long:  ``,
-		Run:   runGenerateFromStdio,
+		Use:     "fromstdio",
+		Short:   "Generate a self-signed certificate",
+		Long:    ``,
+		PreRunE: shared.ValidateCmdFlags,
+		Run:     runGenerateFromStdio,
 	}
 
 	caPath           string
@@ -64,7 +66,7 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 	targetPath = filepath.FromSlash(targetPath)
 
 	caPrivateKey, caPrivateKeyErr := shared.RetrieveOrGeneratePrivateKey(caPrivateKeyPath, targetPath,
-		certNamePrefix, signatureAlg, true)
+		fmt.Sprintf("ca-%s", certNamePrefix), signatureAlg)
 	if caPrivateKeyErr != nil {
 		cmd.PrintErrf("Failed to load CA private key: %s", caPrivateKeyErr)
 		return
@@ -100,7 +102,7 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		newCACertPath := shared.ComputeCertificatePath(targetPath, certNamePrefix, true)
+		newCACertPath := shared.ComputeCertificatePath(targetPath, fmt.Sprintf("ca-%s", certNamePrefix))
 		if saveErr := core.SaveCertificate(newCACertPath, ca, "pem"); saveErr != nil {
 			cmd.PrintErrf("Failed to save CA certificate. Error: %s", saveErr)
 			return
@@ -113,7 +115,7 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	keyPath := shared.ComputeKeyPath(targetPath, certNamePrefix, false)
+	keyPath := shared.ComputeKeyPath(targetPath, certNamePrefix)
 	keyIoError := core.SavePrivateKey(privateKey, keyPath)
 	if keyIoError != nil {
 		cmd.PrintErrf("Failed to save private key. Error: %s", keyIoError)
@@ -151,7 +153,7 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	certPath := shared.ComputeCertificatePath(targetPath, certNamePrefix, false)
+	certPath := shared.ComputeCertificatePath(targetPath, certNamePrefix)
 	if saveErr := core.SaveCertificate(certPath, certificate, "pem"); saveErr != nil {
 		cmd.PrintErrf("Failed to save certificate. Error: %s", saveErr)
 		return
@@ -223,10 +225,4 @@ func includeGenerateFromStdio(cmd *cobra.Command) {
 		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
 		return
 	}
-
-	if len(caPath) > 0 && len(caPrivateKeyPath) <= 0 {
-		cmd.PrintErrf("Private key for the CA certificate is missing.")
-		return
-	}
-
 }

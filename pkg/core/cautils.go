@@ -30,7 +30,9 @@ type CaInput struct {
 func CreateCertificateAuthority(caInput CaInput) (*x509.Certificate, error) {
 	serialNumber, serialNrErr := generateSerialNumber()
 
-	subject := pkix.Name{}
+	subject := pkix.Name{
+		CommonName: caInput.CommonName,
+	}
 
 	if serialNrErr != nil {
 		return nil, serialNrErr
@@ -75,6 +77,14 @@ func CreateCertificateAuthority(caInput CaInput) (*x509.Certificate, error) {
 		BasicConstraintsValid: true,
 	}
 
+	if caInput.EmailAddresses != nil {
+		ca.EmailAddresses = append(ca.EmailAddresses, *caInput.EmailAddresses...)
+	}
+
+	if caInput.PrivateKey == nil {
+		return nil, fmt.Errorf("CreateCertificateAuthority: PrivateKey must not be nil")
+	}
+
 	derBytes, err := x509.CreateCertificate(rand.Reader,
 		ca, ca, getPublicKey(caInput.PrivateKey), caInput.PrivateKey)
 	if err != nil {
@@ -97,7 +107,7 @@ func DecodeCACertificate(path string) (*x509.Certificate, error) {
 	if len(certFormat) > 0 {
 		certFormat = certFormat[1:]
 	} else {
-		return nil, fmt.Errorf("failed to deduct output format from path %s", path)
+		return nil, fmt.Errorf("DecodeCACertificate: failed to deduct output format from path %s", path)
 	}
 
 	formatToAction := map[string]func(data []byte) ([]*x509.Certificate, error){
@@ -110,7 +120,7 @@ func DecodeCACertificate(path string) (*x509.Certificate, error) {
 	}
 	action, ok := formatToAction[certFormat]
 	if !ok {
-		return nil, fmt.Errorf("unsupported certificate format %s", certFormat)
+		return nil, fmt.Errorf("DecodeCACertificate: unsupported certificate format %s", certFormat)
 	}
 
 	ca, decodeErr := action(data)
@@ -123,5 +133,5 @@ func DecodeCACertificate(path string) (*x509.Certificate, error) {
 		return ca[0], nil
 	}
 
-	return nil, fmt.Errorf("ca certifcate could not be decoded, no valid certificate found in the file %s", path)
+	return nil, fmt.Errorf("DecodeCACertificate: ca certifcate could not be decoded, no valid certificate found in the file %s", path)
 }

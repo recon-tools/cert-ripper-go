@@ -2,9 +2,10 @@ package fromcsr
 
 import (
 	"cert-ripper-go/cmd/common"
-	"cert-ripper-go/cmd/generate/cert/shared"
+	"cert-ripper-go/cmd/generate/shared"
 	"cert-ripper-go/pkg/core"
 	"crypto/x509"
+	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
 	"path/filepath"
@@ -13,10 +14,11 @@ import (
 
 var (
 	Cmd = &cobra.Command{
-		Use:   "fromcsr",
-		Short: "Generate a self-signed certificate from a CSR request",
-		Long:  ``,
-		Run:   runGenerateFromCsrRequest,
+		Use:     "fromcsr",
+		Short:   "Generate a self-signed certificate from a CSR request",
+		Long:    ``,
+		PreRunE: shared.ValidateCmdFlags,
+		Run:     runGenerateFromCsrRequest,
 	}
 
 	caPath           string
@@ -53,7 +55,7 @@ func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
 	}
 
 	caPrivateKey, caPrivateKeyErr := shared.RetrieveOrGeneratePrivateKey(caPrivateKeyPath, targetPath,
-		certNamePrefix, signatureAlg, true)
+		fmt.Sprintf("ca-%s", certNamePrefix), signatureAlg)
 	if caPrivateKeyErr != nil {
 		cmd.PrintErrf("Failed to load CA private key: %s", caPrivateKeyErr)
 		return
@@ -81,15 +83,28 @@ func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		newCACertPath := shared.ComputeCertificatePath(targetPath, certNamePrefix, true)
+		newCACertPath := shared.ComputeCertificatePath(targetPath, fmt.Sprintf("ca-%s", certNamePrefix))
 		if saveErr := core.SaveCertificate(newCACertPath, ca, "pem"); saveErr != nil {
 			cmd.PrintErrf("Failed to save CA certificate. Error: %s", saveErr)
 			return
 		}
 	}
 
+	privateKey, keyErr := core.GeneratePrivateKey(common.SignatureAlgTox509[signatureAlg])
+	if keyErr != nil {
+		cmd.PrintErrf("Failed to generate private key. Error: %s", keyErr)
+		return
+	}
+
+	keyPath := shared.ComputeKeyPath(targetPath, certNamePrefix)
+	keyIoError := core.SavePrivateKey(privateKey, keyPath)
+	if keyIoError != nil {
+		cmd.PrintErrf("Failed to save private key. Error: %s", keyIoError)
+		return
+	}
+
 	certificate, certErr := core.CreateCertificateFromCSR(csr, validFromDateTime,
-		time.Duration(validFor)*time.Hour*24, ca, caPrivateKey)
+		time.Duration(validFor)*time.Hour*24, ca, caPrivateKey, privateKey)
 	if certErr != nil {
 		cmd.PrintErrf("Failed to create certificate from CSR. Error: %s", certErr)
 		return
@@ -131,11 +146,6 @@ func includeGenerateFromCsrFlags(cmd *cobra.Command) {
 
 	if err := cmd.MarkFlagRequired("csrPath"); err != nil {
 		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
-		return
-	}
-
-	if len(caPath) > 0 && len(caPrivateKeyPath) <= 0 {
-		cmd.PrintErrf("Private key for the CA certificate is missing.")
 		return
 	}
 }
