@@ -2,14 +2,13 @@ package fromstdio
 
 import (
 	"cert-ripper-go/cmd/common"
+	"cert-ripper-go/cmd/generate/cert/shared"
 	"cert-ripper-go/pkg/core"
 	hostutils "cert-ripper-go/pkg/host"
 	"crypto/x509"
-	"fmt"
 	"github.com/spf13/cobra"
 	"github.com/thediveo/enumflag/v2"
 	"net"
-	"path"
 	"path/filepath"
 	"time"
 )
@@ -64,7 +63,8 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 
 	targetPath = filepath.FromSlash(targetPath)
 
-	caPrivateKey, caPrivateKeyErr := retrieveOrGeneratePrivateKey(caPrivateKeyPath, true)
+	caPrivateKey, caPrivateKeyErr := shared.RetrieveOrGeneratePrivateKey(caPrivateKeyPath, targetPath,
+		certNamePrefix, signatureAlg, true)
 	if caPrivateKeyErr != nil {
 		cmd.PrintErrf("Failed to load CA private key: %s", caPrivateKeyErr)
 		return
@@ -100,7 +100,7 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 			return
 		}
 
-		newCACertPath := computeCertificatePath(true)
+		newCACertPath := shared.ComputeCertificatePath(targetPath, certNamePrefix, true)
 		if saveErr := core.SaveCertificate(newCACertPath, ca, "pem"); saveErr != nil {
 			cmd.PrintErrf("Failed to save CA certificate. Error: %s", saveErr)
 			return
@@ -113,7 +113,7 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	keyPath := computeKeyPath(false)
+	keyPath := shared.ComputeKeyPath(targetPath, certNamePrefix, false)
 	keyIoError := core.SavePrivateKey(privateKey, keyPath)
 	if keyIoError != nil {
 		cmd.PrintErrf("Failed to save private key. Error: %s", keyIoError)
@@ -151,53 +151,11 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	certPath := computeCertificatePath(false)
+	certPath := shared.ComputeCertificatePath(targetPath, certNamePrefix, false)
 	if saveErr := core.SaveCertificate(certPath, certificate, "pem"); saveErr != nil {
 		cmd.PrintErrf("Failed to save certificate. Error: %s", saveErr)
 		return
 	}
-}
-
-func retrieveOrGeneratePrivateKey(path string, isCA bool) (any, error) {
-	if len(path) > 0 {
-		return core.ReadKey(path)
-	}
-	privateKey, keyErr := core.GeneratePrivateKey(common.SignatureAlgTox509[signatureAlg])
-	if keyErr != nil {
-		return nil, keyErr
-	}
-
-	keyPath := computeKeyPath(isCA)
-	saveErr := core.SavePrivateKey(privateKey, keyPath)
-	if saveErr != nil {
-		return nil, saveErr
-	}
-
-	return privateKey, nil
-}
-
-func computeKeyPath(isCA bool) string {
-	caPrefix := ""
-	if isCA {
-		caPrefix = fmt.Sprintf("ca-%s", caPrefix)
-	}
-	keyName := fmt.Sprintf("%s%s.key.pem", caPrefix, certNamePrefix)
-
-	keyPath := path.Join(targetPath, keyName)
-
-	return keyPath
-}
-
-func computeCertificatePath(isCA bool) string {
-	caPrefix := ""
-	if isCA {
-		caPrefix = fmt.Sprintf("ca-%s", caPrefix)
-	}
-	certName := fmt.Sprintf("%s%s.pem", caPrefix, certNamePrefix)
-
-	certPath := path.Join(targetPath, certName)
-
-	return certPath
 }
 
 func init() {

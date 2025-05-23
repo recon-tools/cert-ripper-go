@@ -1,8 +1,13 @@
 package fromcsr
 
 import (
+	"cert-ripper-go/cmd/common"
+	"cert-ripper-go/cmd/generate/cert/shared"
 	"cert-ripper-go/pkg/core"
+	"crypto/x509"
 	"github.com/spf13/cobra"
+	"github.com/thediveo/enumflag/v2"
+	"path/filepath"
 	"time"
 )
 
@@ -14,13 +19,16 @@ var (
 		Run:   runGenerateFromCsrRequest,
 	}
 
+	caPath           string
+	caPrivateKeyPath string
+
 	csrPath        string
-	privateKeyPath string
-	caPath         string
 	targetPath     string
 	validFrom      string
 	validFor       int64
+	signatureAlg   common.SignatureAlgorithm
 	isCa           bool
+	certNamePrefix string
 )
 
 func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
@@ -36,26 +44,52 @@ func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
 		}
 	}
 
+	targetPath = filepath.FromSlash(targetPath)
+
 	csr, csrErr := core.DecodeCSR(csrPath)
 	if csrErr != nil {
 		cmd.PrintErrf("Failed to read and decode CSR from path \"%s\" Error: %s", csrPath, csrErr)
 		return
 	}
 
-	ca, caErr := core.DecodeCertificate(caPath)
-	if caErr != nil {
-		cmd.PrintErrf("Failed to read and decode CA from path \"%s\" Error: %s", caPath, caErr)
+	caPrivateKey, caPrivateKeyErr := shared.RetrieveOrGeneratePrivateKey(caPrivateKeyPath, targetPath,
+		certNamePrefix, signatureAlg, true)
+	if caPrivateKeyErr != nil {
+		cmd.PrintErrf("Failed to load CA private key: %s", caPrivateKeyErr)
 		return
 	}
 
-	privateKey, keyErr := core.ReadKey(privateKeyPath)
-	if keyErr != nil {
-		cmd.PrintErrf("Failed to read private key from path \"%s\" Error: %s", privateKeyPath, keyErr)
-		return
+	var ca *x509.Certificate
+	if len(caPath) > 0 {
+		var caErr error
+		ca, caErr = core.DecodeCACertificate(caPath)
+		if caErr != nil {
+			cmd.PrintErrf("Failed to read and decode CA from path \"%s\" Error: %s", caPath, caErr)
+			return
+		}
+	} else {
+		caInput := core.CaInput{
+			NotBefore:  validFromDateTime,
+			ValidFor:   time.Duration(validFor) * time.Hour * 24,
+			PrivateKey: caPrivateKey,
+		}
+
+		var certErr error
+		ca, certErr = core.CreateCertificateAuthority(caInput)
+		if certErr != nil {
+			cmd.PrintErrf("Failed to create CA certificate. Error: %s", certErr)
+			return
+		}
+
+		newCACertPath := shared.ComputeCertificatePath(targetPath, certNamePrefix, true)
+		if saveErr := core.SaveCertificate(newCACertPath, ca, "pem"); saveErr != nil {
+			cmd.PrintErrf("Failed to save CA certificate. Error: %s", saveErr)
+			return
+		}
 	}
 
 	certificate, certErr := core.CreateCertificateFromCSR(csr, validFromDateTime,
-		time.Duration(validFor)*time.Hour*24, ca[0], privateKey)
+		time.Duration(validFor)*time.Hour*24, ca, caPrivateKey)
 	if certErr != nil {
 		cmd.PrintErrf("Failed to create certificate from CSR. Error: %s", certErr)
 		return
@@ -75,9 +109,13 @@ func includeGenerateFromCsrFlags(cmd *cobra.Command) {
 	cmd.Flags().StringVarP(&csrPath, "csrPath", "s", "",
 		"[Required] Path to the CSR in PEM format.")
 	cmd.Flags().StringVarP(&caPath, "caPath", "c", "",
-		"[Required] Path to CA certificate")
-	cmd.Flags().StringVarP(&privateKeyPath, "privateKeyPath", "k", "",
-		"[Required] Path to the Private Key in PEM format")
+		"[Optional] Path to CA certificate")
+	cmd.Flags().StringVarP(&caPrivateKeyPath, "caPrivateKeyPath", "k", "",
+		"[Optional] Path to CA certificate's private key. Required if --caPath (-a) is set.")
+	cmd.Flags().Var(
+		enumflag.New(&signatureAlg, "signatureAlg", common.SignatureAlgIds, enumflag.EnumCaseInsensitive),
+		"signatureAlg", "[Optional] Signature Algorithm (allowed values: SHA256WithRSA (default if omitted)"+
+			", SHA384WithRSA, SHA512WithRSA, SHA256WithECDSA, SHA384WithECDSA, SHA512WithECDSA)")
 	cmd.Flags().StringVarP(&targetPath, "targetPath", "t", "cert.pem",
 		"[Optional] Path to save the generated certificate. "+
 			"Default: the certificate will be saved in the current working directory with the name of cert.pem")
@@ -96,13 +134,8 @@ func includeGenerateFromCsrFlags(cmd *cobra.Command) {
 		return
 	}
 
-	if err := cmd.MarkFlagRequired("caPath"); err != nil {
-		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
-		return
-	}
-
-	if err := cmd.MarkFlagRequired("privateKeyPath"); err != nil {
-		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
+	if len(caPath) > 0 && len(caPrivateKeyPath) <= 0 {
+		cmd.PrintErrf("Private key for the CA certificate is missing.")
 		return
 	}
 }

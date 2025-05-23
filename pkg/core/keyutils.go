@@ -54,6 +54,8 @@ func GeneratePrivateKey(signatureAlg x509.SignatureAlgorithm) (keys any, err err
 		if err != nil {
 			return nil, err
 		}
+	default:
+		panic("Invalid signature algorithm")
 	}
 	return keys, nil
 }
