@@ -9,9 +9,9 @@ import (
 )
 
 func ValidateCmdFlags(cmd *cobra.Command, args []string) error {
-	csrPath, err := cmd.Flags().GetString("csrPath")
+	caPath, err := cmd.Flags().GetString("caPath")
 	if err != nil {
-		return fmt.Errorf("failed to retrieve --csrPath flag: %w", err)
+		return fmt.Errorf("failed to retrieve --caPath flag: %w", err)
 	}
 
 	caPrivateKeyPath, err := cmd.Flags().GetString("caPrivateKeyPath")
@@ -19,9 +19,10 @@ func ValidateCmdFlags(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to retrieve --caPrivateKeyPath flag: %w", err)
 	}
 
-	if len(csrPath) > 0 && len(caPrivateKeyPath) <= 0 {
+	if caPath != "" && caPrivateKeyPath == "" {
 		return fmt.Errorf("private key for the CA certificate is missing")
 	}
+	
 	return nil
 }
 
@@ -33,6 +34,7 @@ func RetrieveOrGeneratePrivateKey(providedKeyPath string, targetPath string, cer
 	if len(providedKeyPath) > 0 {
 		return core.ReadKey(providedKeyPath)
 	}
+
 	privateKey, keyErr := core.GeneratePrivateKey(common.SignatureAlgTox509[signatureAlg])
 	if keyErr != nil {
 		return nil, keyErr
@@ -49,7 +51,7 @@ func RetrieveOrGeneratePrivateKey(providedKeyPath string, targetPath string, cer
 
 // ComputeKeyPath computes the target path where the private key will be saved.
 func ComputeKeyPath(targetPath string, certNamePrefix string) string {
-	keyName := fmt.Sprintf("%s%s.key.pem", certNamePrefix, certNamePrefix)
+	keyName := fmt.Sprintf("%s.key.pem", certNamePrefix)
 
 	keyPath := filepath.Join(targetPath, keyName)
 
@@ -58,7 +60,7 @@ func ComputeKeyPath(targetPath string, certNamePrefix string) string {
 
 // ComputeCertificatePath Computes the target path where the certificate will be saved.
 func ComputeCertificatePath(targetPath string, certNamePrefix string) string {
-	certName := fmt.Sprintf("%s%s.pem", certNamePrefix, certNamePrefix)
+	certName := fmt.Sprintf("%s.pem", certNamePrefix)
 
 	certPath := filepath.Join(targetPath, certName)
 

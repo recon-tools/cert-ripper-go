@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -72,8 +73,7 @@ func CreateCertificateAuthority(caInput CaInput) (*x509.Certificate, error) {
 		NotBefore:             caInput.NotBefore,
 		NotAfter:              caInput.NotBefore.Add(caInput.ValidFor),
 		IsCA:                  true,
-		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
-		KeyUsage:              x509.KeyUsageDigitalSignature | x509.KeyUsageCertSign,
+		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign,
 		BasicConstraintsValid: true,
 	}
 
@@ -102,7 +102,7 @@ func DecodeCACertificate(path string) (*x509.Certificate, error) {
 		return nil, err
 	}
 
-	certFormat := filepath.Ext(path)
+	certFormat := strings.ToLower(filepath.Ext(path))
 
 	if len(certFormat) > 0 {
 		certFormat = certFormat[1:]

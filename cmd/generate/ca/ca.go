@@ -48,8 +48,7 @@ func generateCACertificate(cmd *cobra.Command, args []string) {
 	}
 
 	targetPath = filepath.FromSlash(targetPath)
-
-	certNamePrefix := "ca"
+	
 	certPath := shared.ComputeCertificatePath(targetPath, certNamePrefix)
 	keyPath := shared.ComputeKeyPath(targetPath, certNamePrefix)
 
