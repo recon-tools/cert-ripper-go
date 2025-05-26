@@ -48,7 +48,7 @@ func generateCACertificate(cmd *cobra.Command, args []string) {
 	}
 
 	targetPath = filepath.FromSlash(targetPath)
-	
+
 	certPath := shared.ComputeCertificatePath(targetPath, certNamePrefix)
 	keyPath := shared.ComputeKeyPath(targetPath, certNamePrefix)
 
@@ -129,9 +129,9 @@ func includeGenerateCAFromStdio(cmd *cobra.Command) {
 		"signatureAlg", "[Optional] Signature Algorithm (allowed values: SHA256WithRSA (default if omitted)"+
 			", SHA384WithRSA, SHA512WithRSA, SHA256WithECDSA, SHA384WithECDSA, SHA512WithECDSA)")
 	cmd.Flags().Lookup("signatureAlg").NoOptDefVal = "SHA256WithRSA"
-	cmd.Flags().StringVar(&targetPath, "targetPath", "./ca.pem",
+	cmd.Flags().StringVar(&targetPath, "targetPath", ".",
 		"Target path for the CSR to be saved.")
-	cmd.Flags().StringVar(&certNamePrefix, "certNamePrefix", "cert",
+	cmd.Flags().StringVar(&certNamePrefix, "certNamePrefix", "ca-cert",
 		"[Optional] Prefix for the name of the certificate. The certificate will be saved in the folder "+
 			"provided with --targetPath. The name of the certificate will be <certNamePrefix>.pem (or other extension "+
 			"requested). Additionally, this prefix will be used in the name of the private key and/or the name of the "+

@@ -11,10 +11,21 @@ func TestCreateCertificateRequiredFields(t *testing.T) {
 	validFrom, parseErr := time.Parse("2006-01-02 15:04:05", "2023-05-10 02:20:32")
 	assert.NoError(t, parseErr)
 
+	caPrivateKeyPath := "test/ca-cert.key.pem"
+	caPrivateKey, caKeyErr := ReadKey(caPrivateKeyPath)
+	assert.NoError(t, caKeyErr)
+
+	caCertPath := "test/ca-cert.pem"
+	caCert, caCertErr := DecodeCACertificate(caCertPath)
+	assert.NoError(t, caCertErr)
+
 	privateKey, keyErr := GeneratePrivateKey(x509.PureEd25519)
 	assert.NoError(t, keyErr)
 
 	certInput := CertificateInput{
+		CAPrivateKey: caPrivateKey,
+		CA:           caCert,
+
 		CommonName: "example.com",
 		NotBefore:  validFrom,
 		ValidFor:   time.Duration(10) * time.Hour * 24,
@@ -28,10 +39,18 @@ func TestCreateCertificateRequiredFields(t *testing.T) {
 	assert.Contains(t, cert.Subject.CommonName, certInput.CommonName)
 	assert.Equal(t, validFrom.Unix(), cert.NotBefore.Unix())
 	assert.Equal(t, validFrom.Add(certInput.ValidFor).Unix(), cert.NotAfter.Unix())
-	assert.True(t, cert.IsCA)
+	assert.False(t, cert.IsCA)
 }
 
 func TestCreateCertificateAllFields(t *testing.T) {
+	caPrivateKeyPath := "test/ca-cert.key.pem"
+	caPrivateKey, caKeyErr := ReadKey(caPrivateKeyPath)
+	assert.NoError(t, caKeyErr)
+
+	caCertPath := "test/ca-cert.pem"
+	caCert, caCertErr := DecodeCACertificate(caCertPath)
+	assert.NoError(t, caCertErr)
+
 	validFrom, parseErr := time.Parse("2006-01-02 15:04:05", "2023-05-10 02:20:32")
 	assert.NoError(t, parseErr)
 
@@ -39,6 +58,9 @@ func TestCreateCertificateAllFields(t *testing.T) {
 	assert.NoError(t, keyErr)
 
 	certInput := CertificateInput{
+		CA:           caCert,
+		CAPrivateKey: caPrivateKey,
+
 		CommonName:              "example.com",
 		NotBefore:               validFrom,
 		ValidFor:                time.Duration(10) * time.Hour * 24,
@@ -71,10 +93,18 @@ func TestCreateCertificateAllFields(t *testing.T) {
 	assert.ElementsMatch(t, cert.Subject.OrganizationalUnit, *certInput.OrgUnit)
 	assert.ElementsMatch(t, cert.DNSNames, *certInput.SubjectAlternativeHosts)
 	assert.ElementsMatch(t, cert.EmailAddresses, *certInput.EmailAddresses)
-	assert.True(t, cert.IsCA)
+	assert.False(t, cert.IsCA)
 }
 
 func TestCreateCertificateFromCSR(t *testing.T) {
+	caPrivateKeyPath := "test/ca-cert.key.pem"
+	caPrivateKey, caKeyErr := ReadKey(caPrivateKeyPath)
+	assert.NoError(t, caKeyErr)
+
+	caCertPath := "test/ca-cert.pem"
+	caCert, caCertErr := DecodeCACertificate(caCertPath)
+	assert.NoError(t, caCertErr)
+
 	days := time.Duration(10) * time.Hour * 24
 	validFrom, parseErr := time.Parse("2006-01-02 15:04:05", "2023-05-10 02:20:32")
 	assert.NoError(t, parseErr)
@@ -87,9 +117,7 @@ func TestCreateCertificateFromCSR(t *testing.T) {
 	privateKey, keyErr := ReadKey(privateKeyPath)
 	assert.NoError(t, keyErr)
 
-	ca := &x509.Certificate{}
-
-	cert, err := CreateCertificateFromCSR(csr, validFrom, days, ca, privateKey, privateKey)
+	cert, err := CreateCertificateFromCSR(csr, validFrom, days, caCert, caPrivateKey, privateKey)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, cert)
@@ -107,6 +135,14 @@ func TestCreateCertificateFromCSR(t *testing.T) {
 }
 
 func TestCreateCertificateFromCSRRequiredFieldsOnly(t *testing.T) {
+	caPrivateKeyPath := "test/ca-cert.key.pem"
+	caPrivateKey, caKeyErr := ReadKey(caPrivateKeyPath)
+	assert.NoError(t, caKeyErr)
+
+	caCertPath := "test/ca-cert.pem"
+	caCert, caCertErr := DecodeCACertificate(caCertPath)
+	assert.NoError(t, caCertErr)
+
 	days := time.Duration(10) * time.Hour * 24
 	validFrom, parseErr := time.Parse("2006-01-02 15:04:05", "2023-05-10 02:20:32")
 	assert.NoError(t, parseErr)
@@ -119,9 +155,7 @@ func TestCreateCertificateFromCSRRequiredFieldsOnly(t *testing.T) {
 	privateKey, keyErr := ReadKey(privateKeyPath)
 	assert.NoError(t, keyErr)
 
-	ca := &x509.Certificate{}
-
-	cert, err := CreateCertificateFromCSR(csr, validFrom, days, ca, privateKey, privateKeyPath)
+	cert, err := CreateCertificateFromCSR(csr, validFrom, days, caCert, caPrivateKey, privateKey)
 
 	assert.NoError(t, err)
 	assert.NotNil(t, cert)

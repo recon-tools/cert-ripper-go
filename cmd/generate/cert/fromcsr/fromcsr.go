@@ -29,7 +29,6 @@ var (
 	validFrom      string
 	validFor       int64
 	signatureAlg   common.SignatureAlgorithm
-	isCa           bool
 	certNamePrefix string
 )
 
@@ -140,9 +139,6 @@ func includeGenerateFromCsrFlags(cmd *cobra.Command) {
 	cmd.Flags().Int64Var(&validFor, "validFor", 365,
 		"[Optional] Duration in days in days until which the certificates will be valid."+
 			"Default: 365 days")
-	cmd.Flags().BoolVar(&isCa, "isCa", false,
-		"[Optional] Specify if the currently generated certificate should be its own Certificate Authority."+
-			"Default: false if not specified")
 
 	if err := cmd.MarkFlagRequired("csrPath"); err != nil {
 		cmd.PrintErrf("Failed to mark flag as required. Error: %s", err)
