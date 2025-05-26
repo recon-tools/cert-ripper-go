@@ -46,9 +46,8 @@ func GetCertificateChain(u *url.URL) ([]*x509.Certificate, error) {
 	if certErr != nil {
 		return nil, certErr
 	}
-	if certErr != nil {
-		chain = append(chain, rootCert...)
-	}
+
+	chain = append(chain, rootCert...)
 
 	return chain, err
 }
@@ -170,6 +169,12 @@ func SaveCertificate(path string, cert *x509.Certificate, certFormat string) err
 	if !ok {
 		return fmt.Errorf("unsupported certificate type %s", certFormat)
 	}
+
+	// Ensure directory already exists before saving the certificate
+	if mkErr := os.MkdirAll(filepath.Dir(path), 0o755); mkErr != nil {
+		return fmt.Errorf("failed to create target directory \"%s\" for the certificate. Error: %w", path, mkErr)
+	}
+
 	return action(path, cert)
 }
 
@@ -302,10 +307,10 @@ func isCertificateRevoked(cert *x509.Certificate) (bool, error) {
 }
 
 type CertificateInput struct {
+	CA         *x509.Certificate
 	CommonName string
 	NotBefore  time.Time
 	ValidFor   time.Duration
-	IsCA       bool
 
 	Country        *[]string
 	State          *[]string
@@ -316,10 +321,12 @@ type CertificateInput struct {
 	OrgUnit        *[]string
 	EmailAddresses *[]string
 	OidEmail       string
+	IPAddresses    *[]net.IP
 
 	SubjectAlternativeHosts *[]string
 
-	PrivateKey any
+	CAPrivateKey any
+	PrivateKey   any
 }
 
 // CreateCertificate generates a self-signed X509 certificate
@@ -399,13 +406,8 @@ func CreateCertificate(certInput CertificateInput) (*x509.Certificate, error) {
 		template.EmailAddresses = append(template.EmailAddresses, *certInput.EmailAddresses...)
 	}
 
-	if certInput.IsCA {
-		template.IsCA = true
-		template.KeyUsage |= x509.KeyUsageCertSign
-	}
-
 	derBytes, err := x509.CreateCertificate(rand.Reader,
-		&template, &template, getPublicKey(certInput.PrivateKey), certInput.PrivateKey)
+		&template, certInput.CA, getPublicKey(certInput.PrivateKey), certInput.CAPrivateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -417,7 +419,8 @@ func CreateCertificate(certInput CertificateInput) (*x509.Certificate, error) {
 func CreateCertificateFromCSR(request *x509.CertificateRequest,
 	notBefore time.Time,
 	validFor time.Duration,
-	isCA bool,
+	ca *x509.Certificate,
+	caPrivateKey any,
 	privateKey any) (*x509.Certificate, error) {
 	serialNumber, serialNrErr := generateSerialNumber()
 	if serialNrErr != nil {
@@ -454,12 +457,7 @@ func CreateCertificateFromCSR(request *x509.CertificateRequest,
 	template.DNSNames = append(template.DNSNames, request.DNSNames...)
 	template.EmailAddresses = append(template.EmailAddresses, request.EmailAddresses...)
 
-	if isCA {
-		template.IsCA = true
-		template.KeyUsage |= x509.KeyUsageCertSign
-	}
-
-	derBytes, err := x509.CreateCertificate(rand.Reader, &template, &template, getPublicKey(privateKey), privateKey)
+	derBytes, err := x509.CreateCertificate(rand.Reader, &template, ca, getPublicKey(privateKey), caPrivateKey)
 	if err != nil {
 		return nil, err
 	}

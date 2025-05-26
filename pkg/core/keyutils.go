@@ -54,6 +54,11 @@ func GeneratePrivateKey(signatureAlg x509.SignatureAlgorithm) (keys any, err err
 		if err != nil {
 			return nil, err
 		}
+	default:
+		keys, err = rsa.GenerateKey(rand.Reader, 2048)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return keys, nil
 }

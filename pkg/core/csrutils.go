@@ -13,6 +13,7 @@ import (
 	"github.com/smallstep/certinfo"
 	"net"
 	"os"
+	"path/filepath"
 )
 
 type CertificateRequest struct {
@@ -145,6 +146,10 @@ func PrintCSR(csr *x509.CertificateRequest) error {
 func SavePrivateKey(privateKey any, targetPath string) error {
 	if _, ioErr := os.Stat(targetPath); ioErr == nil {
 		return fmt.Errorf("file with location %s already exists", targetPath)
+	}
+
+	if mkErr := os.MkdirAll(filepath.Dir(targetPath), 0o755); mkErr != nil {
+		return fmt.Errorf("failed to create target directory \"%s\" for the private key. Error: %w", targetPath, mkErr)
 	}
 
 	var pemData []byte
