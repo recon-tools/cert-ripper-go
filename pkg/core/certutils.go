@@ -156,10 +156,6 @@ func SaveCertificateChain(folderPath string, chain []*x509.Certificate, certForm
 
 // SaveCertificate saves a certificate to the location specified by the `path` using a supported format
 func SaveCertificate(path string, cert *x509.Certificate, certFormat string) error {
-	if mkErr := os.MkdirAll(filepath.Dir(path), 0o755); mkErr != nil {
-		return fmt.Errorf("failed to create target directory \"%s\" for the certificate. Error: %w", path, mkErr)
-	}
-
 	formatToAction := map[string]func(string, *x509.Certificate) error{
 		"pem": saveAsPem,
 		"crt": saveAsPem,
@@ -173,6 +169,12 @@ func SaveCertificate(path string, cert *x509.Certificate, certFormat string) err
 	if !ok {
 		return fmt.Errorf("unsupported certificate type %s", certFormat)
 	}
+
+	// Ensure directory already exists before saving the certificate
+	if mkErr := os.MkdirAll(filepath.Dir(path), 0o755); mkErr != nil {
+		return fmt.Errorf("failed to create target directory \"%s\" for the certificate. Error: %w", path, mkErr)
+	}
+
 	return action(path, cert)
 }
 

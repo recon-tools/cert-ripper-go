@@ -211,7 +211,7 @@ func includeGenerateFromStdio(cmd *cobra.Command) {
 	subjectAlternativeHosts = cmd.Flags().StringSlice("subjectAlternativeHost", nil,
 		"[Optional] Subject Alternative Hosts. It can accept multiple values divided by comma. "+
 			"Default: none")
-	localUsage = cmd.Flags().BoolP("localUsage", "l", true,
+	localUsage = cmd.Flags().BoolP("localUsage", "l", false,
 		"[Optional] Add local IPs to the certificate so it can be used for localhost.")
 	cmd.Flags().Var(
 		enumflag.New(&signatureAlg, "signatureAlg", common.SignatureAlgIds, enumflag.EnumCaseInsensitive),
