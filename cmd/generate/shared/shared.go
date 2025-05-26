@@ -22,7 +22,7 @@ func ValidateCmdFlags(cmd *cobra.Command, args []string) error {
 	if caPath != "" && caPrivateKeyPath == "" {
 		return fmt.Errorf("private key for the CA certificate is missing")
 	}
-	
+
 	return nil
 }
 
@@ -35,7 +35,12 @@ func RetrieveOrGeneratePrivateKey(providedKeyPath string, targetPath string, cer
 		return core.ReadKey(providedKeyPath)
 	}
 
-	privateKey, keyErr := core.GeneratePrivateKey(common.SignatureAlgTox509[signatureAlg])
+	alg, algErr := common.SignatureAlgTox509[signatureAlg]
+	if !algErr {
+		return nil, fmt.Errorf("unsupported signature algorithm %v", signatureAlg)
+	}
+
+	privateKey, keyErr := core.GeneratePrivateKey(alg)
 	if keyErr != nil {
 		return nil, keyErr
 	}
@@ -43,7 +48,7 @@ func RetrieveOrGeneratePrivateKey(providedKeyPath string, targetPath string, cer
 	newKeyPath := ComputeKeyPath(targetPath, certNamePrefix)
 	saveErr := core.SavePrivateKey(privateKey, newKeyPath)
 	if saveErr != nil {
-		return nil, saveErr
+		return nil, fmt.Errorf("failed to save newly generated private key: %w", saveErr)
 	}
 
 	return privateKey, nil

@@ -89,7 +89,13 @@ func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	privateKey, keyErr := core.GeneratePrivateKey(common.SignatureAlgTox509[signatureAlg])
+	alg, algErr := common.SignatureAlgTox509[signatureAlg]
+	if !algErr {
+		cmd.PrintErrf("Unsupported signature algorithm %v", signatureAlg)
+		return
+	}
+
+	privateKey, keyErr := core.GeneratePrivateKey(alg)
 	if keyErr != nil {
 		cmd.PrintErrf("Failed to generate private key. Error: %s", keyErr)
 		return
@@ -109,7 +115,8 @@ func runGenerateFromCsrRequest(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	if ioErr := core.SaveCertificate(targetPath, certificate, "pem"); ioErr != nil {
+	certificatePath := shared.ComputeCertificatePath(targetPath, certNamePrefix)
+	if ioErr := core.SaveCertificate(certificatePath, certificate, "pem"); ioErr != nil {
 		cmd.PrintErrf("Failed to save certificate. Error: %s", ioErr)
 		return
 	}

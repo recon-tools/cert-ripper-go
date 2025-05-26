@@ -109,7 +109,13 @@ func runGenerateFromStdio(cmd *cobra.Command, args []string) {
 		}
 	}
 
-	privateKey, keyErr := core.GeneratePrivateKey(common.SignatureAlgTox509[signatureAlg])
+	alg, algErr := common.SignatureAlgTox509[signatureAlg]
+	if !algErr {
+		cmd.PrintErrf("Unsupported signature algorithm %v", signatureAlg)
+		return
+	}
+
+	privateKey, keyErr := core.GeneratePrivateKey(alg)
 	if keyErr != nil {
 		cmd.PrintErrf("Failed to generate private key. Error: %s", keyErr)
 		return

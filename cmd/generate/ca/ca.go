@@ -52,7 +52,13 @@ func generateCACertificate(cmd *cobra.Command, args []string) {
 	certPath := shared.ComputeCertificatePath(targetPath, certNamePrefix)
 	keyPath := shared.ComputeKeyPath(targetPath, certNamePrefix)
 
-	privateKey, keyErr := core.GeneratePrivateKey(common.SignatureAlgTox509[signatureAlg])
+	alg, algErr := common.SignatureAlgTox509[signatureAlg]
+	if !algErr {
+		cmd.PrintErrf("Unsupported signature algorithm %v", signatureAlg)
+		return
+	}
+
+	privateKey, keyErr := core.GeneratePrivateKey(alg)
 	if keyErr != nil {
 		cmd.PrintErrf("Failed to generate private key. Error: %s", keyErr)
 		return
