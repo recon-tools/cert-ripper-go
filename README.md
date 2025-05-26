@@ -64,7 +64,7 @@ Download the executable from the releases page: https://github.com/recon-tools/c
 
 ## Building
 
-Go 1.19 is required.
+Go 1.22 is required.
 
 ### Linux/MacOS
 
