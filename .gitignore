@@ -1,3 +1,5 @@
 .idea
 certs
 target
+# Added by goreleaser init:
+dist/
